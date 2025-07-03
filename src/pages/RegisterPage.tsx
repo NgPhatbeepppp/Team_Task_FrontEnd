@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { register } from '../services/authService';
+import { Link } from 'react-router-dom';
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -10,6 +11,8 @@ export default function RegisterPage() {
     fullName: '',
     phoneNumber: ''
   });
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -39,7 +42,7 @@ export default function RegisterPage() {
       alignItems: 'center',
       fontFamily: 'Arial, sans-serif',
     }}>
-      <div style={{ position: 'relative', width: '90%', maxWidth: '1100px' }}>
+      <div style={{ position: 'relative', width: '90%', maxWidth: '1300px' }}>
         {/* Floating heading */}
         <h1 style={{
           position: 'absolute',
@@ -60,14 +63,18 @@ export default function RegisterPage() {
 
         {/* Form chính */}
         <form onSubmit={handleSubmit} style={{
-          background: 'rgba(255,255,255,0.4)',
+          position: 'relative',
+          zIndex: 1,
+          background: 'rgba(255,255,255,0.45)',
           backdropFilter: 'blur(5px)',
           WebkitBackdropFilter: 'blur(2px)',
           padding: '60px 40px 40px',
           borderRadius: '16px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.8)'
+          boxShadow: '0 4px 12px rgba(0,0,0,0.9)',
+          minHeight: '550px' // ✅ Dòng này là để tăng chiều cao form
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '50px' }}>
             <div>
               <label style={labelStyle}>Họ và tên</label>
               <input
@@ -100,16 +107,20 @@ export default function RegisterPage() {
                 style={inputStyle}
               />
 
-              <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '20px' }}>
+              <div style={{ textAlign: 'center', marginTop: '65px', fontSize: '20px' }}>
                 Đã có tài khoản?{' '}
-                <span style={{
-                  fontStyle: 'italic',
-                  textDecoration: 'underline',
-                  color: '#AB7C56',
-                  cursor: 'pointer'
-                }}>
+                <Link
+                  to="/login"
+                  style={{
+                    fontStyle: 'italic',
+                    textDecoration: 'underline',
+                    color: '#AB7C56',
+                    cursor: 'pointer'
+                  }}
+                >
                   Đăng nhập
-                </span>
+                </Link>
+
               </div>
             </div>
 
@@ -125,36 +136,72 @@ export default function RegisterPage() {
               />
 
               <label style={labelStyle}>Mật khẩu</label>
-              <input
-                name="password"
-                type="password"
-                placeholder="Nhập vào đây"
-                onChange={handleChange}
-                value={form.password}
-                required
-                style={inputStyle}
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Nhập vào đây"
+                  onChange={handleChange}
+                  value={form.password}
+                  required
+                  style={{ ...inputStyle, paddingRight: '50px' }}
+                />
+                <span
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '15px',
+                    top: '45%',
+                    transform: 'translateY(-50%)',
+                    cursor: 'pointer',
+                    color: '#555',
+                    fontSize: '30px',
+                    userSelect: 'none',
+                  }}
+                >
+                  {showPassword ? '👁️' : '🙈'}
+                </span>
+              </div>
+
 
               <label style={labelStyle}>Giới tính</label>
-              <select
-                name="gender"
-                onChange={handleChange}
-                value={form.gender}
-                required
-                style={{
-                  ...inputStyle,
-                  borderRadius: '12px',
-                  appearance: 'none',
-                }}
-              >
-                <option value="Nam">Nam</option>
-                <option value="Nữ">Nữ</option>
-                <option value="Khác">Khác</option>
-              </select>
+              <div style={{
+                display: 'flex',
+                gap: '20px',
+                marginTop: '30px',
+                marginBottom: '24px'
+              }}>
+                {['Nam', 'Nữ', 'Khác'].map((option) => (
+                  <label key={option} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    fontSize: '20px',
+                    cursor: 'pointer'
+                  }}>
+                    <input
+                      type="radio"
+                      name="gender"
+                      value={option}
+                      checked={form.gender === option}
+                      onChange={handleChange}
+                      style={{
+                        width: '25px',
+                        height: '25px',
+                        accentColor: '#AB7C56',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    {option}
+                  </label>
+                ))}
+              </div>
+
+
 
               <button type="submit" style={{
                 width: '100%',
-                marginTop: '20px',
+                marginTop: '50px',
                 padding: '14px',
                 borderRadius: '999px',
                 backgroundColor: '#B77B4F',
@@ -186,4 +233,5 @@ const inputStyle: React.CSSProperties = {
 
 const labelStyle: React.CSSProperties = {
   fontWeight: 'bold',
+  fontSize: '25px'
 };
