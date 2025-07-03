@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { login } from '../services/authService';
 
-export default function LoginPage() {
+interface LoginPageProps {
+  onLogin: (jwt: string) => void;
+}
+
+export default function LoginPage({ onLogin }: LoginPageProps) {
   const [form, setForm] = useState({ username: '', password: '' });
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -19,9 +23,6 @@ export default function LoginPage() {
     try {
       const token = await login(form);
       localStorage.setItem('token', token);
-      if (remember) {
-        localStorage.setItem('rememberedUsername', form.username);
-      }
       alert('Đăng nhập thành công');
     } catch (err: any) {
       alert('Đăng nhập thất bại: ' + err.response?.data || err.message);
