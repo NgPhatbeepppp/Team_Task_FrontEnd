@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { login } from '../services/authService';
 
-export default function LoginPage() {
+interface LoginPageProps {
+  onLogin: (jwt: string) => void;
+}
+
+export default function LoginPage({ onLogin }: LoginPageProps) {
   const [form, setForm] = useState({ username: '', password: '' });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -12,8 +16,7 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       const token = await login(form);
-      localStorage.setItem('token', token);
-      alert('Đăng nhập thành công');
+      onLogin(token); // sử dụng hàm cha truyền vào
     } catch (err: any) {
       alert('Đăng nhập thất bại: ' + err.response?.data || err.message);
     }
