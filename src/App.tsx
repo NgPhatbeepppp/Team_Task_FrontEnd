@@ -1,25 +1,40 @@
-<<<<<<< HEAD
-=======
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import RegisterPage from './pages/RegisterPage';
->>>>>>> 3324a351c179aa835566c445dd5462a902714383
+// src/App.tsx
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import UserProfilePage from './pages/UserProfilePage';
 
 function App() {
+  // Thay vì dùng state, chúng ta sẽ đọc trực tiếp từ localStorage
+  // để quyết định có nên cho vào trang profile hay không.
+  const token = localStorage.getItem('token');
+
+  const handleLogin = (jwt: string) => {
+    localStorage.setItem('token', jwt);
+    // Thay vì set state, chúng ta sẽ điều hướng hoặc reload trang
+    window.location.href = "/profile"; // Đơn giản nhất là reload để private route kiểm tra lại
+  };
+
   return (
-<<<<<<< HEAD
-    <div style={{ maxWidth: 400, margin: 'auto' }}>
-      <LoginPage />
-    </div>
-=======
-    <Router>
+    <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/register" />} />
+        {/* Route chung cho mọi người */}
+        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
+
+        {/* Route được bảo vệ */}
+        <Route 
+          path="/profile" 
+          element={token ? <UserProfilePage /> : <Navigate to="/login" />} 
+        />
+
+        {/* Route mặc định: nếu có token thì vào profile, không thì ra trang login */}
+        <Route 
+          path="/"
+          element={token ? <Navigate to="/profile" /> : <Navigate to="/login" />}
+        />
       </Routes>
-    </Router>
->>>>>>> 3324a351c179aa835566c445dd5462a902714383
+    </BrowserRouter>
   );
 }
 

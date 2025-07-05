@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { login } from '../services/authService';
+import { Link } from 'react-router-dom'; // ✅ THÊM: Import Link từ react-router-dom
 
 interface LoginPageProps {
   onLogin: (jwt: string) => void;
@@ -22,16 +23,19 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     e.preventDefault();
     try {
       const token = await login(form);
-      localStorage.setItem('token', token);
+      // ✅ THAY ĐỔI: Gọi hàm onLogin được truyền từ App.tsx để xử lý token và điều hướng
+      onLogin(token);
       alert('Đăng nhập thành công');
     } catch (err: any) {
-      alert('Đăng nhập thất bại: ' + err.response?.data || err.message);
+      // Cải thiện thông báo lỗi
+      const errorMessage = err.response?.data?.message || err.message || 'Đã có lỗi xảy ra.';
+      alert('Đăng nhập thất bại: ' + errorMessage);
     }
   };
 
   return (
     <div style={{
-      backgroundImage: 'url(https://images.pexels.com/photos/998646/pexels-photo-998646.jpeg)', // sa mạc
+      backgroundImage: 'url(https://images.pexels.com/photos/998646/pexels-photo-998646.jpeg)',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'center',
       backgroundSize: 'cover',
@@ -152,7 +156,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
         {/* Register link */}
         <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.95em' }}>
-          Chưa có tài khoản? <a href="#" style={{ fontWeight: 'bold', color: '#000', textDecoration: 'none' }}>Đăng ký</a>
+          {/* ✅ THAY ĐỔI: Chuyển từ <a> sang <Link> để điều hướng mà không tải lại trang */}
+          Chưa có tài khoản?{' '}
+          <Link to="/register" style={{ fontWeight: 'bold', color: '#000', textDecoration: 'none' }}>
+            Đăng ký
+          </Link>
         </div>
       </form>
     </div>

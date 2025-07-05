@@ -1,6 +1,6 @@
 // src/pages/UserProfilePage.tsx
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../services/api'; 
 import { Pencil } from 'lucide-react';
 
 interface UserProfile {
@@ -18,19 +18,19 @@ export default function UserProfilePage() {
   const [editedProfile, setEditedProfile] = useState<Partial<UserProfile>>({});
   const [loading, setLoading] = useState(false);
 
-  const token = localStorage.getItem('token');
-  const api = axios.create({
-    baseURL: 'https://localhost:5250/api',
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
   useEffect(() => {
-    api.get('/userprofile/me')
-      .then(res => {
+    const fetchProfile = async () => {
+      try {
+        const res = await api.get('/userprofile/me');
         setProfile(res.data);
         setEditedProfile(res.data);
-      })
-      .catch(err => console.error(err));
+      } catch (err) {
+        console.error('Lỗi khi tải hồ sơ người dùng:', err);
+        alert('Không thể tải hồ sơ. Vui lòng đăng nhập lại.');
+      }
+    };
+
+    fetchProfile();
   }, []);
 
   const handleEdit = (field: string) => setEditField(field);
@@ -46,13 +46,14 @@ export default function UserProfilePage() {
       setProfile(editedProfile as UserProfile);
       setEditField(null);
     } catch (err) {
+      console.error('Lỗi khi cập nhật hồ sơ:', err);
       alert('Cập nhật thất bại');
     }
     setLoading(false);
   };
 
   const renderField = (label: string, field: keyof UserProfile) => (
-    <div style={{ marginBottom: '1rem' }}>
+    <div style={{ marginBottom: '1rem' }} key={field}>
       <label style={{ fontWeight: 'bold' }}>{label}:</label>
       {editField === field ? (
         <input
@@ -62,7 +63,11 @@ export default function UserProfilePage() {
       ) : (
         <span style={{ marginLeft: '0.5rem' }}>{profile?.[field] || '-'}</span>
       )}
-      <Pencil style={{ marginLeft: 8, cursor: 'pointer' }} size={16} onClick={() => handleEdit(field)} />
+      <Pencil
+        style={{ marginLeft: 8, cursor: 'pointer' }}
+        size={16}
+        onClick={() => handleEdit(field)}
+      />
     </div>
   );
 

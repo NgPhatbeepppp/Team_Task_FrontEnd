@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { register } from '../services/authService';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // ✅ THÊM: import useNavigate
 
 export default function RegisterPage() {
+  // ✅ THÊM: Khởi tạo hook useNavigate để lấy hàm điều hướng
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     username: '',
     email: '',
@@ -23,9 +26,14 @@ export default function RegisterPage() {
     try {
       const token = await register(form);
       localStorage.setItem('token', token);
-      alert('Đăng ký thành công');
+      alert('Đăng ký thành công! Bạn sẽ được chuyển đến trang cá nhân.');
+      
+      // ✅ THÊM: Điều hướng người dùng đến trang profile sau khi đăng ký thành công
+      navigate('/profile');
+
     } catch (err: any) {
-      alert('Đăng ký thất bại: ' + err.response?.data || err.message);
+      const errorMessage = err.response?.data?.message || err.message || 'Đã có lỗi xảy ra.';
+      alert('Đăng ký thất bại: ' + errorMessage);
     }
   };
 
@@ -43,7 +51,6 @@ export default function RegisterPage() {
       fontFamily: 'Arial, sans-serif',
     }}>
       <div style={{ position: 'relative', width: '90%', maxWidth: '1300px' }}>
-        {/* Floating heading */}
         <h1 style={{
           position: 'absolute',
           top: '-40px',
@@ -55,13 +62,11 @@ export default function RegisterPage() {
           textShadow: '2px 2px 10px rgba(0,0,0,0.5)',
           margin: 0,
           padding: 0,
-          zIndex: 2 // ✅ THÊM DÒNG NÀY
+          zIndex: 2
         }}>
           Đăng Ký
         </h1>
 
-
-        {/* Form chính */}
         <form onSubmit={handleSubmit} style={{
           position: 'relative',
           zIndex: 1,
@@ -71,7 +76,7 @@ export default function RegisterPage() {
           padding: '60px 40px 40px',
           borderRadius: '16px',
           boxShadow: '0 4px 12px rgba(0,0,0,0.9)',
-          minHeight: '550px' // ✅ Dòng này là để tăng chiều cao form
+          minHeight: '550px'
         }}>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '50px' }}>
@@ -196,8 +201,6 @@ export default function RegisterPage() {
                   </label>
                 ))}
               </div>
-
-
 
               <button type="submit" style={{
                 width: '100%',
