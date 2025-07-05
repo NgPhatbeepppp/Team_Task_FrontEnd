@@ -1,25 +1,22 @@
-<<<<<<< HEAD
-=======
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import RegisterPage from './pages/RegisterPage';
->>>>>>> 3324a351c179aa835566c445dd5462a902714383
 import LoginPage from './pages/LoginPage';
 
 function App() {
+  const handleLogin = (token: string) => {
+    // ví dụ: lưu token hoặc chuyển trang
+    localStorage.setItem('token', token);
+    console.log('Đăng nhập thành công, token:', token);
+  };
+
   return (
-<<<<<<< HEAD
-    <div style={{ maxWidth: 400, margin: 'auto' }}>
-      <LoginPage />
-    </div>
-=======
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/register" />} />
+        <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
       </Routes>
     </Router>
->>>>>>> 3324a351c179aa835566c445dd5462a902714383
   );
 }
 

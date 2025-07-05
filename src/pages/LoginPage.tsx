@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { login } from '../services/authService';
+import { Link } from 'react-router-dom';
+
 
 interface LoginPageProps {
   onLogin: (jwt: string) => void;
@@ -152,7 +154,17 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
         {/* Register link */}
         <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.95em' }}>
-          Chưa có tài khoản? <a href="#" style={{ fontWeight: 'bold', color: '#000', textDecoration: 'none' }}>Đăng ký</a>
+          Chưa có tài khoản?
+          <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.95em' }}>
+            Chưa có tài khoản?{' '}
+            <Link
+              to="/register"
+              style={{ fontWeight: 'bold', color: '#000', textDecoration: 'none' }}
+            >
+              Đăng ký
+            </Link>
+          </div>
+
         </div>
       </form>
     </div>
