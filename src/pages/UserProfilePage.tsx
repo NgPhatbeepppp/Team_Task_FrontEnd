@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { Pencil } from 'lucide-react';
+import Sidebar from '../components/Sidebar'; // << 1. IMPORT SIDEBAR MỚI
 
 interface UserProfile {
   fullName?: string;
@@ -16,7 +17,6 @@ export default function UserProfilePage() {
   const [editField, setEditField] = useState<keyof UserProfile | null>(null);
   const [editedProfile, setEditedProfile] = useState<Partial<UserProfile>>({});
   const [loading, setLoading] = useState(false);
-  const [hovered, setHovered] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const token = localStorage.getItem('token');
@@ -30,7 +30,6 @@ export default function UserProfilePage() {
       alert('Bạn chưa đăng nhập!');
       return;
     }
-
     api.get('/userprofile/me')
       .then(res => {
         setProfile(res.data);
@@ -59,7 +58,7 @@ export default function UserProfilePage() {
     }
     setLoading(false);
   };
-
+  
   const renderField = (label: string, field: keyof UserProfile) => (
     <div style={styles.inputGroup}>
       <label style={styles.label}>{label}</label>
@@ -82,35 +81,8 @@ export default function UserProfilePage() {
 
   return (
     <div style={styles.layout}>
-      {/* Sidebar */}
-      <aside style={styles.sidebar}>
-        <div style={styles.menuTitle}>MANAGEMENT</div>
-        <ul style={styles.menuList}>
-          {[
-            ['Trang chủ', '🏠'],
-            ['Quản lý nhóm', '👥'],
-            ['Quản lý dự án', '📁'],
-            ['Nhiệm vụ', '📝'],
-            ['Lịch', '📅'],
-            ['Cuộc trò chuyện', '💬'],
-            ['Cài đặt nâng cao', '⚙️'],
-            ['Tài khoản cá nhân', '👤']
-          ].map(([label, icon]) => (
-            <li
-              key={label}
-              style={{
-                ...styles.menuItem,
-                ...(label === 'Tài khoản cá nhân' ? styles.activeItem : {}),
-                ...(hovered === label ? styles.menuItemHover : {})
-              }}
-              onMouseEnter={() => setHovered(label)}
-              onMouseLeave={() => setHovered(null)}
-            >
-              {icon} {label}
-            </li>
-          ))}
-        </ul>
-      </aside>
+      {/* 2. SỬ DỤNG COMPONENT SIDEBAR VÀ TRUYỀN PROP `activeItem` */}
+      <Sidebar activeItem="Tài khoản cá nhân" />
 
       {/* Content */}
       <div style={styles.wrapper}>
@@ -165,7 +137,6 @@ export default function UserProfilePage() {
             <h2 style={styles.title}>
               hi, <b>{profile.fullName || profile.phoneNumber}</b>
             </h2>
-
             <div style={styles.grid}>
               {renderField('Họ và tên', 'fullName')}
               {renderField('Chức danh', 'jobTitle')}
@@ -173,7 +144,6 @@ export default function UserProfilePage() {
               {renderField('Tiểu sử', 'bio')}
               {renderField('Số điện thoại', 'phoneNumber')}
             </div>
-
             <button style={styles.button} onClick={handleSave} disabled={loading}>
               {loading ? 'Đang lưu...' : 'Cập nhật'}
             </button>
@@ -184,51 +154,17 @@ export default function UserProfilePage() {
   );
 }
 
+// 3. XÓA CÁC STYLE CỦA SIDEBAR KHỎI ĐÂY
 const styles: { [key: string]: React.CSSProperties } = {
   layout: {
     display: 'flex',
     minHeight: '100vh',
     fontFamily: 'sans-serif',
+    backgroundColor: '#f5f5f5',
   },
-  sidebar: {
-    width: 280,
-    backgroundColor: '#efefef',
-    padding: 24,
-    boxShadow: '2px 0 8px rgba(0,0,0,0.05)',
-  },
-  menuTitle: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginBottom: 24,
-  },
-  menuList: {
-    listStyle: 'none',
-    padding: 0,
-    margin: 0,
-  },
-  menuItem: {
-    padding: '10px 12px',
-    borderRadius: 12,
-    marginBottom: 8,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    color: '#333',
-    fontWeight: 500,
-    transition: 'background-color 0.2s',
-  },
-  activeItem: {
-    backgroundColor: '#fff3db',
-    fontWeight: 'bold',
-    color: '#a56c3b',
-  },
-  menuItemHover: {
-    backgroundColor: '#e2e2e2',
-  },
+  // Sidebar styles đã được chuyển đi
   wrapper: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   header: {
     backgroundColor: '#d6cfc9',
