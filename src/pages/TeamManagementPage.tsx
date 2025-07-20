@@ -1,27 +1,27 @@
-// src/pages/TeamManagementPage.tsx (đã cập nhật)
+// src/pages/TeamManagementPage.tsx (Đã sửa lỗi)
 
 import React, { useState, useEffect, FormEvent } from 'react';
-import Sidebar from '../components/Sidebar'; // << Import Sidebar mới
+import Sidebar from '../components/Sidebar';
 import { Team, getTeams, createTeam, deleteTeam, inviteUserToTeam, updateTeam, removeMember, grantLeader } from '../services/teamService';
 import { User, getUsers } from '../services/userService';
 import { ShieldCheck, Trash2, UserPlus, Crown, Edit, X } from 'lucide-react';
 
 // --- STYLES ---
-// Các style này gần như không đổi, chỉ điều chỉnh layout chung
+const SIDEBAR_WIDTH = '256px';
+
 const styles: { [key: string]: React.CSSProperties } = {
-    // Layout chung để chứa cả Sidebar và Content
     pageLayout: {
         display: 'flex',
         minHeight: '100vh',
-        backgroundColor: '#f8fafc' // Màu nền xám nhạt
+        backgroundColor: '#f8fafc'
     },
-    // Phần nội dung chính, có padding để không bị che bởi Sidebar (trên màn hình lớn)
     mainContent: {
         flexGrow: 1,
-        // Chú ý: Cần thêm padding left để không bị Sidebar che khuất trên màn hình lớn
-        // giá trị 288px (w-72) tương ứng với chiều rộng của Sidebar trong code mới
-        paddingLeft: '288px', // << Rất quan trọng cho layout desktop
-        padding: '24px'
+        padding: '24px',
+        marginLeft: '0'
+    },
+    mainContentDesktop: {
+        marginLeft: SIDEBAR_WIDTH
     },
     container: { fontFamily: 'sans-serif', maxWidth: '1100px', margin: 'auto' },
     header: { fontSize: '2rem', fontWeight: 700, marginBottom: '24px', color: '#1a202c' },
@@ -55,6 +55,7 @@ export default function TeamManagementPage() {
     const [editingTeam, setEditingTeam] = useState<Team | null>(null);
     const [formName, setFormName] = useState('');
     const [formDescription, setFormDescription] = useState('');
+    const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -66,11 +67,16 @@ export default function TeamManagementPage() {
                 setError(null);
             } catch (err) {
                 setError('Không thể tải dữ liệu.');
+                console.error(err); // Log lỗi ra console để debug
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
+        
+        const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const refreshTeams = async () => {
@@ -121,7 +127,8 @@ export default function TeamManagementPage() {
     };
     
     const handleInviteUser = async (team: Team) => {
-        const teamMemberIds = new Set(team.teamMembers.map(m => m.userId));
+        // ✅ SỬA LỖI: Luôn đảm bảo team.teamMembers là một mảng
+        const teamMemberIds = new Set((team.teamMembers || []).map(m => m.userId));
         const availableUsers = allUsers.filter(u => !teamMemberIds.has(u.id));
         if (availableUsers.length === 0) {
             alert("Tất cả người dùng đã ở trong nhóm.");
@@ -159,15 +166,15 @@ export default function TeamManagementPage() {
         }
     }
 
+    const mainContentStyle = isDesktop
+        ? { ...styles.mainContent, ...styles.mainContentDesktop }
+        : styles.mainContent;
+
     return (
         <div style={styles.pageLayout}>
-            {/* SỬ DỤNG SIDEBAR MỚI VÀ TRUYỀN PROP */}
             <Sidebar activeItem="Quản lý nhóm" />
-
-            {/* PHẦN NỘI DUNG CHÍNH */}
-            <main style={styles.mainContent}>
+            <main style={mainContentStyle}>
                 <div style={styles.container}>
-                    {/* Header và nút tạo mới */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h1 style={styles.header}>Quản Lý Nhóm</h1>
                         <button onClick={openCreateModal} style={{...styles.button, backgroundColor: '#4f46e5'}}>
@@ -175,7 +182,6 @@ export default function TeamManagementPage() {
                         </button>
                     </div>
                     
-                    {/* Render loading, error hoặc danh sách team */}
                     {loading ? <p>Đang tải dữ liệu...</p> : 
                      error ? <p style={{ color: 'red' }}>{error}</p> : (
                         <div style={styles.teamList}>
@@ -191,13 +197,15 @@ export default function TeamManagementPage() {
                                     <div style={styles.cardBody}>
                                         <p style={{ margin: '0 0 16px', color: '#718096' }}>{team.description || 'Không có mô tả.'}</p>
                                         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                                            <strong>Thành viên ({team.teamMembers.length})</strong>
+                                            {/* ✅ SỬA LỖI: Cung cấp mảng rỗng [] làm giá trị mặc định */}
+                                            <strong>Thành viên ({(team.teamMembers || []).length})</strong>
                                             <button onClick={() => handleInviteUser(team)} style={{...styles.button, padding: '4px 8px', fontSize: '0.8rem', backgroundColor: '#38a169'}}>
                                                 <UserPlus size={14}/>
                                             </button>
                                         </div>
                                         <ul style={styles.memberList}>
-                                            {team.teamMembers.map(member => (
+                                            {/* ✅ SỬA LỖI: Cung cấp mảng rỗng [] làm giá trị mặc định */}
+                                            {(team.teamMembers || []).map(member => (
                                                 <li key={member.userId} style={styles.memberItem}>
                                                     <div style={styles.memberInfo}>
                                                         <span>{member.user.username}</span>
@@ -226,7 +234,6 @@ export default function TeamManagementPage() {
                         </div>
                     )}
 
-                    {/* Modal */}
                     {isModalOpen && (
                         <div style={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
                             <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
@@ -235,7 +242,6 @@ export default function TeamManagementPage() {
                                     <X cursor="pointer" onClick={() => setIsModalOpen(false)} />
                                 </div>
                                 <form onSubmit={handleFormSubmit}>
-                                    {/* Form fields... */}
                                     <div style={styles.inputGroup}>
                                         <label htmlFor="teamName" style={styles.label}>Tên Nhóm:</label>
                                         <input id="teamName" type="text" value={formName} onChange={(e) => setFormName(e.target.value)} style={styles.input} required/>

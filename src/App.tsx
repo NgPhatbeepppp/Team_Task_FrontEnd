@@ -1,22 +1,26 @@
 // src/App.tsx
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import UserProfilePage from './pages/UserProfilePage';
+import TeamManagementPage from './pages/TeamManagementPage';
 
-function App() {
-  // Thay vì dùng state, chúng ta sẽ đọc trực tiếp từ localStorage
-  // để quyết định có nên cho vào trang profile hay không.
+function AppWrapper() {
+  // Vì useNavigate chỉ có thể dùng bên trong component con của BrowserRouter,
+  // chúng ta tạo một component bao bọc là AppWrapper
+  const navigate = useNavigate();
+
+  // Đọc token từ localStorage
   const token = localStorage.getItem('token');
 
   const handleLogin = (jwt: string) => {
     localStorage.setItem('token', jwt);
-    // Thay vì set state, chúng ta sẽ điều hướng hoặc reload trang
-    window.location.href = "/profile"; // Đơn giản nhất là reload để private route kiểm tra lại
+    // ✅ SỬA LỖI: Sử dụng navigate để chuyển trang mượt mà, không tải lại trang.
+    navigate("/profile");
   };
 
   return (
-    <BrowserRouter>
       <Routes>
         {/* Route chung cho mọi người */}
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
@@ -33,9 +37,31 @@ function App() {
           path="/"
           element={token ? <Navigate to="/profile" /> : <Navigate to="/login" />}
         />
+
+        {/* Thêm các route khác cho các trang bạn đã tạo */}
+        <Route 
+          path="/teams" 
+          element={token ? <TeamManagementPage /> : <Navigate to="/login" />} 
+        />
+        
+        {/* Thêm một catch-all hoặc trang 404 nếu cần */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+  );
+}
+
+
+function App() {
+  return (
+    <BrowserRouter>
+      {/* AppWrapper bây giờ nằm bên trong BrowserRouter */}
+      <AppWrapper />
     </BrowserRouter>
   );
 }
+
+
+
+
 
 export default App;
