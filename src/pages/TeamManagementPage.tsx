@@ -127,7 +127,7 @@ export default function TeamManagementPage() {
     };
     
     const handleInviteUser = async (team: Team) => {
-        // ✅ SỬA LỖI: Luôn đảm bảo team.teamMembers là một mảng
+        
         const teamMemberIds = new Set((team.teamMembers || []).map(m => m.userId));
         const availableUsers = allUsers.filter(u => !teamMemberIds.has(u.id));
         if (availableUsers.length === 0) {
