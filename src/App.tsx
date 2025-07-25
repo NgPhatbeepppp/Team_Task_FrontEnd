@@ -1,67 +1,53 @@
 // src/App.tsx
-
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import React, { JSX } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext'; // ✅ Chỉ import Provider từ context
+import { useAuth } from './hooks/useAuth';             // ✅ Import hook từ thư mục hooks
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import UserProfilePage from './pages/UserProfilePage';
-import TeamManagementPage from './pages/TeamManagementPage';
 
-function AppWrapper() {
-  // Vì useNavigate chỉ có thể dùng bên trong component con của BrowserRouter,
-  // chúng ta tạo một component bao bọc là AppWrapper
-  const navigate = useNavigate();
+// Component trung gian để xử lý logic Route được bảo vệ
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? children : <Navigate to="/login" />;
+};
 
-  // Đọc token từ localStorage
-  const token = localStorage.getItem('token');
-
-  const handleLogin = (jwt: string) => {
-    localStorage.setItem('token', jwt);
-    // ✅ SỬA LỖI: Sử dụng navigate để chuyển trang mượt mà, không tải lại trang.
-    navigate("/profile");
-  };
-
+function AppRoutes() {
+  const { isAuthenticated } = useAuth();
+  
   return (
-      <Routes>
-        {/* Route chung cho mọi người */}
-        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-        <Route path="/register" element={<RegisterPage />} />
+    <Routes>
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/profile" /> : <LoginPage />} />
+      <Route path="/register" element={isAuthenticated ? <Navigate to="/profile" /> : <RegisterPage />} />
 
-        {/* Route được bảo vệ */}
-        <Route 
-          path="/profile" 
-          element={token ? <UserProfilePage /> : <Navigate to="/login" />} 
-        />
+      {/* Route được bảo vệ */}
+      <Route 
+        path="/profile" 
+        element={
+          <ProtectedRoute>
+            <UserProfilePage />
+          </ProtectedRoute>
+        } 
+      />
 
-        {/* Route mặc định: nếu có token thì vào profile, không thì ra trang login */}
-        <Route 
-          path="/"
-          element={token ? <Navigate to="/profile" /> : <Navigate to="/login" />}
-        />
-
-        {/* Thêm các route khác cho các trang bạn đã tạo */}
-        <Route 
-          path="/teams" 
-          element={token ? <TeamManagementPage /> : <Navigate to="/login" />} 
-        />
-        
-        {/* Thêm một catch-all hoặc trang 404 nếu cần */}
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+      {/* Route mặc định */}
+      <Route 
+        path="/"
+        element={<Navigate to={isAuthenticated ? "/profile" : "/login"} />}
+      />
+    </Routes>
   );
 }
-
 
 function App() {
   return (
     <BrowserRouter>
-      {/* AppWrapper bây giờ nằm bên trong BrowserRouter */}
-      <AppWrapper />
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </BrowserRouter>
   );
 }
-
-
-
-
 
 export default App;

@@ -1,10 +1,12 @@
+// src/pages/RegisterPage.tsx
 import React, { useState } from 'react';
-import { register } from '../services/authService';
-import { Link, useNavigate } from 'react-router-dom'; // ✅ THÊM: import useNavigate
+import { register as registerService } from '../services/authService';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 export default function RegisterPage() {
-  // ✅ THÊM: Khởi tạo hook useNavigate để lấy hàm điều hướng
   const navigate = useNavigate();
+  const { login } = useAuth(); // ✅ THÊM: Lấy hàm login từ context
 
   const [form, setForm] = useState({
     username: '',
@@ -24,13 +26,10 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = await register(form);
-      localStorage.setItem('token', token);
+      const token = await registerService(form);
+      login(token); // ✅ THAY ĐỔI: Cập nhật state toàn cục qua context
       alert('Đăng ký thành công! Bạn sẽ được chuyển đến trang cá nhân.');
-      
-      // ✅ THÊM: Điều hướng người dùng đến trang profile sau khi đăng ký thành công
-      navigate('/profile');
-
+      navigate('/profile'); // ✅ THAY ĐỔI: Điều hướng không cần tải lại trang
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Đã có lỗi xảy ra.';
       alert('Đăng ký thất bại: ' + errorMessage);

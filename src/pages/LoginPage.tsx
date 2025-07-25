@@ -1,12 +1,13 @@
+// src/pages/LoginPage.tsx
 import React, { useState } from 'react';
-import { login } from '../services/authService';
-import { Link } from 'react-router-dom'; // ✅ THÊM: Import Link từ react-router-dom
+import { login as loginService } from '../services/authService';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
-interface LoginPageProps {
-  onLogin: (jwt: string) => void;
-}
+export default function LoginPage() {
+  const navigate = useNavigate();
+  const { login } = useAuth(); 
 
-export default function LoginPage({ onLogin }: LoginPageProps) {
   const [form, setForm] = useState({ username: '', password: '' });
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -22,12 +23,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = await login(form);
-      // ✅ THAY ĐỔI: Gọi hàm onLogin được truyền từ App.tsx để xử lý token và điều hướng
-      onLogin(token);
-      alert('Đăng nhập thành công');
+      const token = await loginService(form);
+      login(token);       
+      navigate('/profile'); 
     } catch (err: any) {
-      // Cải thiện thông báo lỗi
       const errorMessage = err.response?.data?.message || err.message || 'Đã có lỗi xảy ra.';
       alert('Đăng nhập thất bại: ' + errorMessage);
     }
@@ -156,7 +155,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
         {/* Register link */}
         <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.95em' }}>
-          {/* ✅ THAY ĐỔI: Chuyển từ <a> sang <Link> để điều hướng mà không tải lại trang */}
           Chưa có tài khoản?{' '}
           <Link to="/register" style={{ fontWeight: 'bold', color: '#000', textDecoration: 'none' }}>
             Đăng ký
