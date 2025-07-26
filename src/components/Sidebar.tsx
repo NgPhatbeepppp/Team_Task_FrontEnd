@@ -12,6 +12,7 @@ import {
   ChatBubbleLeftIcon,
   Cog6ToothIcon,
   UserIcon,
+  BellIcon, 
 } from '@heroicons/react/24/outline';
 
 type MenuItem = [string, React.ForwardRefExoticComponent<Omit<React.SVGProps<SVGSVGElement>, "ref"> & { title?: string; titleId?: string; } & React.RefAttributes<SVGSVGElement>>];
@@ -22,6 +23,7 @@ const menuItems: MenuItem[] = [
   ['Quản lý dự án', FolderIcon],
   ['Nhiệm vụ', DocumentTextIcon],
   ['Lịch', CalendarIcon],
+  ['Lời mời & Thông báo', BellIcon],
   ['Cuộc trò chuyện', ChatBubbleLeftIcon],
   ['Cài đặt nâng cao', Cog6ToothIcon],
   ['Tài khoản cá nhân', UserIcon],
@@ -34,6 +36,7 @@ const pathMap: { [key: string]: string } = {
     'Quản lý dự án': '/projects',
     'Nhiệm vụ': '/tasks',
     'Lịch': '/calendar',
+     'Lời mời & Thông báo': '/notifications',
     'Cuộc trò chuyện': '/chat',
     'Cài đặt nâng cao': '/settings',
     'Tài khoản cá nhân': '/profile'
