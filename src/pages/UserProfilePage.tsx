@@ -1,7 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
-import axios from 'axios';
+// src/pages/UserProfilePage.tsx
+import React, { useEffect, useRef, useState } from 'react';
 import { Pencil } from 'lucide-react';
+import Sidebar from '../components/Sidebar'; // ✅ GIỮ LẠI: Sử dụng Sidebar component có sẵn của bạn
+import api from '../services/api';           // ✅ SỬ DỤNG: api instance toàn cục đã cấu hình
+import { useAuth } from '../hooks/useAuth';   // ✅ SỬ DỤNG: hook để quản lý state xác thực
 
+// --- INTERFACE ---
 interface UserProfile {
   fullName?: string;
   avatarUrl?: string;
@@ -11,36 +15,41 @@ interface UserProfile {
   phoneNumber?: string;
 }
 
+// --- COMPONENT CHÍNH ---
 export default function UserProfilePage() {
+  const { logout } = useAuth(); // ✅ SỬ DỤNG: Lấy hàm logout từ context
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [editField, setEditField] = useState<keyof UserProfile | null>(null);
   const [editedProfile, setEditedProfile] = useState<Partial<UserProfile>>({});
   const [loading, setLoading] = useState(false);
-  const [hovered, setHovered] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
 
-  const token = localStorage.getItem('token');
-  const api = axios.create({
-    baseURL: 'http://localhost:5250/api',
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  // --- LOGIC ---
 
   useEffect(() => {
-    if (!token) {
-      alert('Bạn chưa đăng nhập!');
-      return;
-    }
-
+    // ✅ THAY ĐỔI: Không cần lấy token hay tạo axios instance nữa.
+    // Interceptor trong file api.ts đã tự động làm việc này.
     api.get('/userprofile/me')
       .then(res => {
         setProfile(res.data);
         setEditedProfile(res.data);
       })
       .catch(err => {
-        console.error(err);
-        alert('Lỗi khi tải dữ liệu hồ sơ');
+        console.error("Lỗi khi tải hồ sơ:", err);
+        if (err.response?.status === 401) {
+          alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+          logout(); // Tự động đăng xuất người dùng
+        } else {
+          alert('Không thể tải dữ liệu hồ sơ.');
+        }
       });
-  }, []);
+
+    // Logic kiểm tra kích thước màn hình
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [logout]); // Thêm logout vào dependency array
 
   const handleEdit = (field: keyof UserProfile) => setEditField(field);
 
@@ -59,6 +68,16 @@ export default function UserProfilePage() {
     }
     setLoading(false);
   };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const imageURL = URL.createObjectURL(file);
+      handleChange('avatarUrl', imageURL);
+    }
+  };
+
+  // --- RENDER ---
 
   const renderField = (label: string, field: keyof UserProfile) => (
     <div style={styles.inputGroup}>
@@ -80,40 +99,16 @@ export default function UserProfilePage() {
 
   if (!profile) return <p>Đang tải...</p>;
 
+  const wrapperStyle = isDesktop
+    ? { ...styles.wrapper, ...styles.wrapperDesktop }
+    : styles.wrapper;
+
   return (
     <div style={styles.layout}>
-      {/* Sidebar */}
-      <aside style={styles.sidebar}>
-        <div style={styles.menuTitle}>MANAGEMENT</div>
-        <ul style={styles.menuList}>
-          {[
-            ['Trang chủ', '🏠'],
-            ['Quản lý nhóm', '👥'],
-            ['Quản lý dự án', '📁'],
-            ['Nhiệm vụ', '📝'],
-            ['Lịch', '📅'],
-            ['Cuộc trò chuyện', '💬'],
-            ['Cài đặt nâng cao', '⚙️'],
-            ['Tài khoản cá nhân', '👤']
-          ].map(([label, icon]) => (
-            <li
-              key={label}
-              style={{
-                ...styles.menuItem,
-                ...(label === 'Tài khoản cá nhân' ? styles.activeItem : {}),
-                ...(hovered === label ? styles.menuItemHover : {})
-              }}
-              onMouseEnter={() => setHovered(label)}
-              onMouseLeave={() => setHovered(null)}
-            >
-              {icon} {label}
-            </li>
-          ))}
-        </ul>
-      </aside>
-
-      {/* Content */}
-      <div style={styles.wrapper}>
+      {/* ✅ SỬ DỤNG: Gọi Sidebar component */}
+      <Sidebar activeItem="Tài khoản cá nhân" />
+      
+      <div style={wrapperStyle}>
         <div style={styles.header}>
           <input style={styles.searchInput} placeholder="Tìm kiếm gì đó ở đây..." />
           <div style={styles.headerRight}>
@@ -135,13 +130,7 @@ export default function UserProfilePage() {
                 accept="image/*"
                 ref={fileRef}
                 style={{ display: 'none' }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const imageURL = URL.createObjectURL(file);
-                    handleChange('avatarUrl', imageURL);
-                  }
-                }}
+                onChange={handleFileChange}
               />
               <button
                 type="button"
@@ -165,7 +154,6 @@ export default function UserProfilePage() {
             <h2 style={styles.title}>
               hi, <b>{profile.fullName || profile.phoneNumber}</b>
             </h2>
-
             <div style={styles.grid}>
               {renderField('Họ và tên', 'fullName')}
               {renderField('Chức danh', 'jobTitle')}
@@ -173,7 +161,6 @@ export default function UserProfilePage() {
               {renderField('Tiểu sử', 'bio')}
               {renderField('Số điện thoại', 'phoneNumber')}
             </div>
-
             <button style={styles.button} onClick={handleSave} disabled={loading}>
               {loading ? 'Đang lưu...' : 'Cập nhật'}
             </button>
@@ -184,51 +171,22 @@ export default function UserProfilePage() {
   );
 }
 
+// --- STYLES ---
+const SIDEBAR_WIDTH = '256px';
+
 const styles: { [key: string]: React.CSSProperties } = {
   layout: {
     display: 'flex',
     minHeight: '100vh',
     fontFamily: 'sans-serif',
-  },
-  sidebar: {
-    width: 280,
-    backgroundColor: '#efefef',
-    padding: 24,
-    boxShadow: '2px 0 8px rgba(0,0,0,0.05)',
-  },
-  menuTitle: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    marginBottom: 24,
-  },
-  menuList: {
-    listStyle: 'none',
-    padding: 0,
-    margin: 0,
-  },
-  menuItem: {
-    padding: '10px 12px',
-    borderRadius: 12,
-    marginBottom: 8,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    color: '#333',
-    fontWeight: 500,
-    transition: 'background-color 0.2s',
-  },
-  activeItem: {
-    backgroundColor: '#fff3db',
-    fontWeight: 'bold',
-    color: '#a56c3b',
-  },
-  menuItemHover: {
-    backgroundColor: '#e2e2e2',
+    backgroundColor: '#f5f5f5',
   },
   wrapper: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    marginLeft: '0' 
+  },
+  wrapperDesktop: {
+      marginLeft: SIDEBAR_WIDTH
   },
   header: {
     backgroundColor: '#d6cfc9',

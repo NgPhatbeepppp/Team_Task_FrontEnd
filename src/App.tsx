@@ -1,39 +1,70 @@
-// src/App.tsx
+import React, { JSX } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import UserProfilePage from './pages/UserProfilePage';
+import TeamPage from './pages/TeamPage'; 
 
+// Component trung gian để xử lý logic Route được bảo vệ
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  // Nếu đang trong quá trình xác thực, có thể hiển thị loading
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  
+  return isAuthenticated ? children : <Navigate to="/login" />;
+};
+
+// Component chứa các Routes của ứng dụng
+function AppRoutes() {
+  const { isAuthenticated } = useAuth();
+  
+  return (
+    <Routes>
+      {/* Các route công khai */}
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/teams" /> : <LoginPage />} />
+      <Route path="/register" element={isAuthenticated ? <Navigate to="/teams" /> : <RegisterPage />} />
+
+      {/* Route được bảo vệ cho trang Teams */}
+      <Route 
+        path="/teams" 
+        element={
+          <ProtectedRoute>
+            <TeamPage />
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* Route được bảo vệ cho trang Profile */}
+      <Route 
+        path="/profile" 
+        element={
+          <ProtectedRoute>
+            <UserProfilePage />
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* Route mặc định: Điều hướng đến /teams nếu đã đăng nhập, ngược lại về /login */}
+      <Route 
+        path="/"
+        element={<Navigate to={isAuthenticated ? "/teams" : "/login"} />}
+      />
+    </Routes>
+  );
+}
+
+// Component App chính
 function App() {
-  // Thay vì dùng state, chúng ta sẽ đọc trực tiếp từ localStorage
-  // để quyết định có nên cho vào trang profile hay không.
-  const token = localStorage.getItem('token');
-
-  const handleLogin = (jwt: string) => {
-    localStorage.setItem('token', jwt);
-    // Thay vì set state, chúng ta sẽ điều hướng hoặc reload trang
-    window.location.href = "/profile"; // Đơn giản nhất là reload để private route kiểm tra lại
-  };
-
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Route chung cho mọi người */}
-        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-        <Route path="/register" element={<RegisterPage />} />
-
-        {/* Route được bảo vệ */}
-        <Route 
-          path="/profile" 
-          element={token ? <UserProfilePage /> : <Navigate to="/login" />} 
-        />
-
-        {/* Route mặc định: nếu có token thì vào profile, không thì ra trang login */}
-        <Route 
-          path="/"
-          element={token ? <Navigate to="/profile" /> : <Navigate to="/login" />}
-        />
-      </Routes>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </BrowserRouter>
   );
 }
