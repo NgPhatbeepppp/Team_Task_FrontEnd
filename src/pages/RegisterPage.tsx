@@ -151,18 +151,7 @@ export default function RegisterPage() {
                   style={{ ...inputStyle, paddingRight: '50px' }}
                 />
                 <span
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: '15px',
-                    top: '45%',
-                    transform: 'translateY(-50%)',
-                    cursor: 'pointer',
-                    color: '#555',
-                    fontSize: '30px',
-                    userSelect: 'none',
-                  }}
-                >
+                  >
                   {showPassword ? '👁️' : '🙈'}
                 </span>
               </div>

@@ -1,27 +1,45 @@
-// src/App.tsx
 import React, { JSX } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext'; // ✅ Chỉ import Provider từ context
-import { useAuth } from './hooks/useAuth';             // ✅ Import hook từ thư mục hooks
+import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './hooks/useAuth';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import UserProfilePage from './pages/UserProfilePage';
+import TeamPage from './pages/TeamPage'; 
 
 // Component trung gian để xử lý logic Route được bảo vệ
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  // Nếu đang trong quá trình xác thực, có thể hiển thị loading
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
+// Component chứa các Routes của ứng dụng
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
   
   return (
     <Routes>
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/profile" /> : <LoginPage />} />
-      <Route path="/register" element={isAuthenticated ? <Navigate to="/profile" /> : <RegisterPage />} />
+      {/* Các route công khai */}
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/teams" /> : <LoginPage />} />
+      <Route path="/register" element={isAuthenticated ? <Navigate to="/teams" /> : <RegisterPage />} />
 
-      {/* Route được bảo vệ */}
+      {/* Route được bảo vệ cho trang Teams */}
+      <Route 
+        path="/teams" 
+        element={
+          <ProtectedRoute>
+            <TeamPage />
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* Route được bảo vệ cho trang Profile */}
       <Route 
         path="/profile" 
         element={
@@ -31,15 +49,16 @@ function AppRoutes() {
         } 
       />
 
-      {/* Route mặc định */}
+      {/* Route mặc định: Điều hướng đến /teams nếu đã đăng nhập, ngược lại về /login */}
       <Route 
         path="/"
-        element={<Navigate to={isAuthenticated ? "/profile" : "/login"} />}
+        element={<Navigate to={isAuthenticated ? "/teams" : "/login"} />}
       />
     </Routes>
   );
 }
 
+// Component App chính
 function App() {
   return (
     <BrowserRouter>

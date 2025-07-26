@@ -1,83 +1,79 @@
 // src/services/teamService.ts
 
 import api from './api';
-import { User } from './userService'; // Import User type
+import { User } from './userService';
 
 // Định nghĩa kiểu dữ liệu cho thành viên trong nhóm
+// RoleInTeam sẽ có giá trị là 'TeamLeader' hoặc 'Member'
 export interface TeamMember {
     userId: number;
-    user: User;
-    isLeader: boolean;
+    user: User; // Thông tin chi tiết của user
+    roleInTeam: 'TeamLeader' | 'Member';
 }
-
-// Cập nhật kiểu dữ liệu cho Team để bao gồm danh sách thành viên
+// Định nghĩa kiểu dữ liệu cho một Team
 export interface Team {
-  id: number;
-  teamName: string;
-  description: string;
-  teamLeaderId: number;
-  teamMembers: TeamMember[]; // Thêm danh sách thành viên
+    id: number;
+    name: string;
+    description: string;
+    createdByUserId: number;
+    teamMembers: TeamMember[];
 }
 
 /**
- * Lấy danh sách tất cả các nhóm (bao gồm thông tin thành viên)
+ * Lấy danh sách các team mà người dùng hiện tại là thành viên.
+ * Backend endpoint: GET /api/team/mine
  */
-export const getTeams = async (): Promise<Team[]> => {
-  const response = await api.get<Team[]>('/team');
-  return response.data;
+export const getMyTeams = async (): Promise<Team[]> => {
+    const response = await api.get<Team[]>('/team/mine');
+    return response.data;
 };
 
 /**
- * Tạo một nhóm mới
+ * Lấy thông tin chi tiết của một team.
+ * Backend endpoint: GET /api/team/{id}
  */
-export const createTeam = async (teamData: { teamName: string, description: string }): Promise<Team> => {
-  const response = await api.post<Team>('/team', teamData);
-  return response.data;
+export const getTeamDetails = async (id: number): Promise<Team> => {
+    const response = await api.get<Team>(`/team/${id}`);
+    return response.data;
 };
 
 /**
- * Cập nhật thông tin nhóm
- * @param teamId ID của nhóm
- * @param teamData Dữ liệu cần cập nhật
+ * Tạo một team mới.
+ * Backend endpoint: POST /api/team
  */
-export const updateTeam = async (teamId: number, teamData: { teamName: string, description: string }): Promise<void> => {
-    // API yêu cầu gửi cả object Team hoàn chỉnh, nên ta tạo một object giả lập với id
-    const payload = { id: teamId, ...teamData };
-    await api.put(`/team/${teamId}`, payload);
-}
-
-/**
- * Xóa một nhóm theo ID
- */
-export const deleteTeam = async (teamId: number): Promise<void> => {
-  await api.delete(`/team/${teamId}`);
+export const createTeam = async (teamData: { name: string; description: string }): Promise<Team> => {
+    const response = await api.post<Team>('/team', teamData);
+    return response.data;
 };
 
 /**
- * Mời một người dùng vào nhóm
+ * Xóa một team.
+ * Backend endpoint: DELETE /api/team/{id}
  */
-export const inviteUserToTeam = async (teamId: number, userId: number): Promise<void> => {
-    await api.post(`/teams/${teamId}/invitations`, userId, {
-        headers: { 'Content-Type': 'application/json' }
-    });
+export const deleteTeam = async (id: number): Promise<void> => {
+    await api.delete(`/team/${id}`);
 };
 
 /**
- * Xóa thành viên khỏi nhóm
- * @param teamId ID của nhóm
- * @param userId ID của thành viên cần xóa
+ * Mời một thành viên mới vào team.
+ * Backend endpoint: POST /api/teams/{teamId}/invitations
  */
-export const removeMember = async (teamId: number, userId: number): Promise<void> => {
+export const inviteUserToTeam = async (teamId: number, targetUserId: number): Promise<void> => {
+    // Backend yêu cầu gửi targetUserId trong body
+    await api.post(`/teams/${teamId}/invitations`, { targetUserId });
+};
+
+/**
+ * Trao quyền trưởng nhóm cho một thành viên khác.
+ * Backend endpoint: POST /api/team/{teamId}/grant-leader/{targetUserId}
+ */
+export const grantLeaderRole = async (teamId: number, targetUserId: number): Promise<void> => {
+    await api.post(`/team/${teamId}/grant-leader/${targetUserId}`);
+};
+/**
+ * (Tùy chọn) Rời khỏi một team.
+ * Backend endpoint: DELETE /api/team/{teamId}/members/{userId}
+ */
+export const leaveTeam = async (teamId: number, userId: number): Promise<void> => {
     await api.delete(`/team/${teamId}/members/${userId}`);
-};
-
-/**
- * Trao quyền trưởng nhóm
- * @param teamId ID của nhóm
- * @param targetUserId ID của người dùng sẽ trở thành trưởng nhóm mới
- */
-export const grantLeader = async (teamId: number, targetUserId: number): Promise<void> => {
-    await api.post(`/team/${teamId}/grant-leader`, targetUserId, {
-        headers: { 'Content-Type': 'application/json' }
-    });
 };
