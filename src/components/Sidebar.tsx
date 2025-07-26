@@ -1,8 +1,9 @@
-// src/components/Sidebar.tsx (đã có chức năng điều hướng)
+// src/components/Sidebar.tsx (đã cập nhật chức năng đăng xuất)
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom'; // <<< 1. IMPORT COMPONENT <LINK>
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth'; // <<< 1. IMPORT useAuth hook
 import {
   HomeIcon,
   UserGroupIcon,
@@ -12,7 +13,8 @@ import {
   ChatBubbleLeftIcon,
   Cog6ToothIcon,
   UserIcon,
-  BellIcon, 
+  ArrowLeftOnRectangleIcon, // <<< 2. IMPORT ICON ĐĂNG XUẤT
+  BellIcon,
 } from '@heroicons/react/24/outline';
 
 type MenuItem = [string, React.ForwardRefExoticComponent<Omit<React.SVGProps<SVGSVGElement>, "ref"> & { title?: string; titleId?: string; } & React.RefAttributes<SVGSVGElement>>];
@@ -22,21 +24,20 @@ const menuItems: MenuItem[] = [
   ['Quản lý nhóm', UserGroupIcon],
   ['Quản lý dự án', FolderIcon],
   ['Nhiệm vụ', DocumentTextIcon],
-  ['Lịch', CalendarIcon],
   ['Lời mời & Thông báo', BellIcon],
+  ['Lịch', CalendarIcon],
   ['Cuộc trò chuyện', ChatBubbleLeftIcon],
   ['Cài đặt nâng cao', Cog6ToothIcon],
   ['Tài khoản cá nhân', UserIcon],
 ];
 
-// <<< 2. TẠO MỘT BẢN ĐỒ (MAP) TỪ TÊN MENU ĐẾN ĐƯỜNG DẪN (ROUTE) >>>
 const pathMap: { [key: string]: string } = {
     'Trang chủ': '/',
     'Quản lý nhóm': '/teams',
     'Quản lý dự án': '/projects',
     'Nhiệm vụ': '/tasks',
+    'Lời mời & Thông báo': '/notifications',
     'Lịch': '/calendar',
-     'Lời mời & Thông báo': '/notifications',
     'Cuộc trò chuyện': '/chat',
     'Cài đặt nâng cao': '/settings',
     'Tài khoản cá nhân': '/profile'
@@ -49,8 +50,10 @@ interface SidebarProps {
 
 export default function Sidebar({ activeItem }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { logout } = useAuth(); // <<< 3. LẤY HÀM LOGOUT TỪ AUTH CONTEXT
+  const navigate = useNavigate();
 
-  // Logic để mở sidebar trên màn hình lớn nếu bạn muốn
+  // Logic để mở sidebar trên màn hình lớn
   React.useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
@@ -63,6 +66,16 @@ export default function Sidebar({ activeItem }: SidebarProps) {
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // <<< 4. TẠO HÀM XỬ LÝ ĐĂNG XUẤT >>>
+  const handleLogout = () => {
+    if (window.confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
+      logout();
+      // Logic trong App.tsx sẽ tự động điều hướng về trang đăng nhập
+      // Tuy nhiên, có thể thêm navigate('/login') để đảm bảo điều hướng ngay lập tức
+      navigate('/login');
+    }
+  };
 
   return (
     <>
@@ -87,23 +100,33 @@ export default function Sidebar({ activeItem }: SidebarProps) {
             <div className="p-6 border-b border-gray-100">
               <h2 className="text-xl font-semibold text-gray-800">MANAGEMENT</h2>
             </div>
-            <ul className="flex-1 p-4 space-y-2 overflow-y-auto">
-              {menuItems.map(([label, Icon]) => (
-                // <<< 3. BỌC MỖI MỤC MENU BẰNG COMPONENT <LINK> >>>
-                <Link to={pathMap[label] || '/'} key={label} style={{ textDecoration: 'none' }}>
-                  <li
-                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                      label === activeItem
-                        ? 'bg-indigo-50 text-indigo-700 font-semibold'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Icon className="w-6 h-6 shrink-0" />
-                    <span>{label}</span>
+            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+              <ul>
+                {menuItems.map(([label, Icon]) => (
+                  <li key={label}>
+                    <Link to={pathMap[label] || '/'} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                        label === activeItem
+                          ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Icon className="w-6 h-6 shrink-0" />
+                      <span>{label}</span>
+                    </Link>
                   </li>
-                </Link>
-              ))}
-            </ul>
+                ))}
+              </ul>
+            </nav>
+            {/* <<< 5. THÊM NÚT ĐĂNG XUẤT VÀO CUỐI SIDEBAR >>> */}
+            <div className="p-4 mt-auto border-t border-gray-100">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 p-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <ArrowLeftOnRectangleIcon className="w-6 h-6 shrink-0" />
+                <span className="font-semibold">Đăng xuất</span>
+              </button>
+            </div>
           </motion.aside>
         )}
       </AnimatePresence>
