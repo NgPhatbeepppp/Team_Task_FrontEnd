@@ -9,20 +9,18 @@ import {
   deleteTeam,
   leaveTeam,
   grantLeaderRole,
-  inviteUserToTeam, // Cần import hàm này
+  inviteUserToTeam,
   Team,
 } from '../services/teamService';
 import { useAuth } from '../hooks/useAuth';
-import { getUsers, User } from '../services/userService';
 
 const TeamPage = () => {
     // --- STATES ---
     const [teams, setTeams] = useState<Team[]>([]);
-    const [allUsers, setAllUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    // ✨ SỬA LỖI: Tách state cho từng modal để tránh nhầm lẫn
+    // Tách state cho từng modal để quản lý rõ ràng
     const [isGrantLeaderModalOpen, setIsGrantLeaderModalOpen] = useState(false);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [selectedTeamForModal, setSelectedTeamForModal] = useState<Team | null>(null);
@@ -31,30 +29,26 @@ const TeamPage = () => {
     const currentUserId = user?.id;
 
     // --- DATA FETCHING ---
+    const fetchTeams = async () => {
+        try {
+            setLoading(true);
+            const userTeams = await getMyTeams();
+            setTeams(userTeams);
+            setError(null);
+        } catch (err) {
+            setError('Không thể tải danh sách nhóm. Vui lòng thử lại.');
+            console.error("Lỗi khi fetch teams:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            if (currentUserId) {
-                try {
-                    setLoading(true);
-                    // ✨ TỐI ƯU: Gọi song song 2 API để tải dữ liệu nhanh hơn
-                    const [userTeams, allSystemUsers] = await Promise.all([
-                        getMyTeams(),
-                        getUsers()
-                    ]);
-                    setTeams(userTeams);
-                    setAllUsers(allSystemUsers);
-                    setError(null);
-                } catch (err) {
-                    setError('Không thể tải dữ liệu. Vui lòng thử lại.');
-                    console.error("Lỗi khi fetch dữ liệu:", err);
-                } finally {
-                    setLoading(false);
-                }
-            } else {
-                setLoading(false); // Dừng loading nếu không có user
-            }
-        };
-        fetchData();
+        if (currentUserId) {
+            fetchTeams();
+        } else {
+            setLoading(false); // Dừng loading nếu không có user
+        }
     }, [currentUserId]);
 
     // --- MODAL HANDLERS ---
@@ -69,7 +63,7 @@ const TeamPage = () => {
         setSelectedTeamForModal(null);
     };
 
-    // ✨ THÊM MỚI: Mở/Đóng Modal Mời thành viên
+    // Mở/Đóng Modal Mời thành viên
     const handleOpenInviteModal = (team: Team) => {
         setSelectedTeamForModal(team);
         setIsInviteModalOpen(true);
@@ -87,18 +81,7 @@ const TeamPage = () => {
             try {
                 await grantLeaderRole(selectedTeamForModal.id, targetUserId);
                 alert('Trao quyền thành công!');
-                // Reload teams after granting leader role
-                if (currentUserId) {
-                    setLoading(true);
-                    try {
-                        const userTeams = await getMyTeams();
-                        setTeams(userTeams);
-                    } catch (err) {
-                        setError('Không thể tải dữ liệu. Vui lòng thử lại.');
-                    } finally {
-                        setLoading(false);
-                    }
-                }
+                fetchTeams(); // Tải lại để cập nhật vai trò
             } catch (err) {
                 alert('Trao quyền thất bại.');
             } finally {
@@ -107,23 +90,57 @@ const TeamPage = () => {
         }
     };
 
-    // ✨ THÊM MỚI: Xử lý mời thành viên
     const handleInviteMember = async (targetUserId: number) => {
         if (!selectedTeamForModal) return;
         try {
             await inviteUserToTeam(selectedTeamForModal.id, targetUserId);
             alert('Đã gửi lời mời thành công!');
-            // Không cần tải lại trang, chỉ cần đóng modal
-            handleCloseInviteModal();
+            // Không cần đóng modal ngay, để trưởng nhóm có thể mời nhiều người
         } catch (err) {
-            alert('Gửi lời mời thất bại. Người dùng có thể đã ở trong nhóm hoặc đã được mời.');
+            alert('Gửi lời mời thất bại. Người dùng có thể đã ở trong nhóm hoặc đã có lời mời đang chờ.');
         }
     };
 
-    const handleCreateTeam = async () => { /* ... Giữ nguyên ... */ };
-    const handleNavigateToDetails = (teamId: number) => { /* ... Giữ nguyên ... */ };
-    const handleDeleteTeam = async (teamId: number) => { /* ... Giữ nguyên ... */ };
-    const handleLeaveTeam = async (teamId: number) => { /* ... Giữ nguyên ... */ };
+    const handleCreateTeam = async () => {
+        const name = prompt('Nhập tên nhóm mới:');
+        if (name && name.trim()) {
+            const description = prompt('Nhập mô tả cho nhóm (không bắt buộc):') || '';
+            try {
+                await createTeam({ name, description });
+                fetchTeams();
+            } catch (err) {
+                alert('Tạo nhóm thất bại.');
+            }
+        }
+    };
+
+    const handleNavigateToDetails = (teamId: number) => {
+        console.log(`Điều hướng đến trang chi tiết của nhóm ID: ${teamId}`);
+    };
+
+    const handleDeleteTeam = async (teamId: number) => {
+        if (window.confirm('Bạn có chắc chắn muốn xóa nhóm này không?')) {
+            try {
+                await deleteTeam(teamId);
+                setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));
+            } catch (err) {
+                alert('Xóa nhóm thất bại.');
+            }
+        }
+    };
+
+    const handleLeaveTeam = async (teamId: number) => {
+        if (window.confirm('Bạn có chắc chắn muốn rời khỏi nhóm này?')) {
+            try {
+                if (currentUserId) {
+                    await leaveTeam(teamId, currentUserId);
+                    setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));
+                }
+            } catch (err) {
+                alert('Rời nhóm thất bại.');
+            }
+        }
+    };
     
     // --- RENDER LOGIC ---
     const renderContent = () => {
@@ -147,7 +164,7 @@ const TeamPage = () => {
                             onDeleteTeam={handleDeleteTeam}
                             onLeaveTeam={handleLeaveTeam}
                             onOpenGrantLeaderModal={handleOpenGrantLeaderModal}
-                            onOpenInviteModal={handleOpenInviteModal} // ✨ THÊM PROP NÀY
+                            onOpenInviteModal={handleOpenInviteModal}
                         />
                     );
                 })}
@@ -173,7 +190,6 @@ const TeamPage = () => {
                 </div>
             </main>
 
-            {/* Render cả 2 modal với state riêng */}
             {selectedTeamForModal && currentUserId && (
                 <>
                     <SelectMemberModal
@@ -187,9 +203,8 @@ const TeamPage = () => {
                     <InviteMemberModal
                         isOpen={isInviteModalOpen}
                         onClose={handleCloseInviteModal}
-                        allUsers={allUsers}
-                        currentMembers={selectedTeamForModal.teamMembers}
                         onInvite={handleInviteMember}
+                        teamId={selectedTeamForModal.id}
                         teamName={selectedTeamForModal.name}
                     />
                 </>

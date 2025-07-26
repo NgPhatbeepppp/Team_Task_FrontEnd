@@ -1,16 +1,14 @@
-// src/services/teamService.ts
-
 import api from './api';
 import { User } from './userService';
 
-// Định nghĩa kiểu dữ liệu cho thành viên trong nhóm
-// RoleInTeam sẽ có giá trị là 'TeamLeader' hoặc 'Member'
+// --- INTERFACES ---
+
 export interface TeamMember {
     userId: number;
-    user: User; // Thông tin chi tiết của user
+    user: User;
     roleInTeam: 'TeamLeader' | 'Member';
 }
-// Định nghĩa kiểu dữ liệu cho một Team
+
 export interface Team {
     id: number;
     name: string;
@@ -19,61 +17,53 @@ export interface Team {
     teamMembers: TeamMember[];
 }
 
-/**
- * Lấy danh sách các team mà người dùng hiện tại là thành viên.
- * Backend endpoint: GET /api/team/mine
- */
+export interface SearchedUser extends User {
+    statusInTeam: 'Member' | 'Pending' | 'NotInvited';
+}
+
+// --- API FUNCTIONS ---
+
 export const getMyTeams = async (): Promise<Team[]> => {
     const response = await api.get<Team[]>('/team/mine');
     return response.data;
 };
 
-/**
- * Lấy thông tin chi tiết của một team.
- * Backend endpoint: GET /api/team/{id}
- */
-export const getTeamDetails = async (id: number): Promise<Team> => {
-    const response = await api.get<Team>(`/team/${id}`);
-    return response.data;
-};
-
-/**
- * Tạo một team mới.
- * Backend endpoint: POST /api/team
- */
 export const createTeam = async (teamData: { name: string; description: string }): Promise<Team> => {
     const response = await api.post<Team>('/team', teamData);
     return response.data;
 };
 
-/**
- * Xóa một team.
- * Backend endpoint: DELETE /api/team/{id}
- */
 export const deleteTeam = async (id: number): Promise<void> => {
     await api.delete(`/team/${id}`);
 };
 
-/**
- * Mời một thành viên mới vào team.
- * Backend endpoint: POST /api/teams/{teamId}/invitations
- */
 export const inviteUserToTeam = async (teamId: number, targetUserId: number): Promise<void> => {
-    // Backend yêu cầu gửi targetUserId trong body
-    await api.post(`/teams/${teamId}/invitations`, { targetUserId });
+    await api.post(`/team/${teamId}/invitations`, { targetUserId });
 };
 
-/**
- * Trao quyền trưởng nhóm cho một thành viên khác.
- * Backend endpoint: POST /api/team/{teamId}/grant-leader/{targetUserId}
- */
 export const grantLeaderRole = async (teamId: number, targetUserId: number): Promise<void> => {
     await api.post(`/team/${teamId}/grant-leader/${targetUserId}`);
 };
-/**
- * (Tùy chọn) Rời khỏi một team.
- * Backend endpoint: DELETE /api/team/{teamId}/members/{userId}
- */
+
+export const removeMember = async (teamId: number, targetUserId: number): Promise<void> => {
+    await api.delete(`/team/${teamId}/members/${targetUserId}`);
+};
+
 export const leaveTeam = async (teamId: number, userId: number): Promise<void> => {
-    await api.delete(`/team/${teamId}/members/${userId}`);
+    return removeMember(teamId, userId);
+};
+
+/**
+ * Tìm kiếm người dùng để mời vào một team cụ thể.
+ * Backend: GET /api/team/{teamId}/invitations/search-users?query=...
+ */
+export const searchUsersForInvitation = async (teamId: number, query: string): Promise<SearchedUser[]> => {
+    if (query.trim().length < 2) {
+        return [];
+    }
+    // ✨ Đảm bảo URL này là chính xác: /team/{id}/invitations/search-users
+    const response = await api.get<SearchedUser[]>(`/team/${teamId}/invitations/search-users`, {
+        params: { query }
+    });
+    return response.data;
 };
