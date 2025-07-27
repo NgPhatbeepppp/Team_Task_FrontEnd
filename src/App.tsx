@@ -7,6 +7,7 @@ import RegisterPage from './pages/RegisterPage';
 import UserProfilePage from './pages/UserProfilePage';
 import TeamPage from './pages/TeamPage'; 
 import NotificationsPage from './pages/NotificationsPage';
+import ProjectsPage from './pages/ProjectsPage';
 
 // Component trung gian để xử lý logic Route được bảo vệ
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -57,7 +58,15 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
-
+      <Route 
+        path="/projects" 
+        element={
+          <ProtectedRoute>
+            <ProjectsPage />
+          </ProtectedRoute>
+        } 
+      />
+      
       {/* Route mặc định: Điều hướng đến /teams nếu đã đăng nhập, ngược lại về /login */}
       <Route 
         path="/"
