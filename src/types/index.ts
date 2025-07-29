@@ -24,3 +24,16 @@ export interface Team {
     createdByUserId: number;
     teamMembers: TeamMember[]; 
 }
+// Định nghĩa cấu trúc cho TaskItem
+export interface TaskItem {
+    id: number;
+    title: string;
+    description: string | null;
+    priority: 'Low' | 'Medium' | 'High';
+    deadline: string | null;
+    createdAt: string;
+    statusId: number | null;
+    assignedToUserId: number | null;
+    assignedTo: User | null; // Lồng thông tin người được giao
+    projectId: number; // ID của dự án mà task này thuộc về
+}

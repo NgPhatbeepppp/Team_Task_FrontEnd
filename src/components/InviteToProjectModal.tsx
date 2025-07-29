@@ -66,8 +66,11 @@ export const InviteToProjectModal: React.FC<InviteToProjectModalProps> = ({ isOp
 
     try {
       if (item.type === 'User') {
-        await inviteUserToProject(project.id, item.data.id);
+        // --- THAY ĐỔI DUY NHẤT TẠI ĐÂY ---
+        // Gửi `item.data.username` thay vì `item.data.id`
+        await inviteUserToProject(project.id, item.data.username); 
       } else {
+        // Lời gọi này đã đúng với service mới
         await inviteTeamToProject(project.id, item.data.id);
       }
       // Thêm ID vào danh sách đã mời để cập nhật UI

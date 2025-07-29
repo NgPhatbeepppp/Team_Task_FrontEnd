@@ -1,21 +1,32 @@
-// src/components/ProjectCard.tsx
+// src/components/ProjectCard.tsx (Cập nhật)
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom'; // ✅ THÊM MỚI
 import { Project } from '../services/projectService';
 import { UserPlus, Users } from 'lucide-react';
 
 interface ProjectCardProps {
   project: Project;
   onOpenInviteModal: (project: Project) => void;
-  // Thêm các hàm xử lý khác sau này nếu cần (xoá, sửa,...)
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onOpenInviteModal }) => {
+  const navigate = useNavigate(); 
+
+  //  Hàm xử lý khi click vào card
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Ngăn chặn điều hướng khi click vào nút "Mời"
+    if ((e.target as HTMLElement).closest('button')) return;
+    navigate(`/project/${project.id}`);
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-lg p-5 flex flex-col h-full transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5">
+    <div 
+      className="bg-white rounded-lg shadow-lg p-5 flex flex-col h-full transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5 cursor-pointer" // ✅ THÊM MỚI: cursor-pointer
+      onClick={handleCardClick} 
+    >
       <div className="flex justify-between items-start mb-3">
         <h3 className="font-bold text-xl text-gray-900">{project.name}</h3>
-        {/* Có thể thêm menu ... ở đây sau này */}
       </div>
 
       <p className="text-sm text-gray-600 flex-grow mb-4 line-clamp-3">
