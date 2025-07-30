@@ -1,11 +1,19 @@
 // src/services/projectService.ts
 
 import api from './api';
-import { User, Team, Project } from '../types'; // Import các kiểu dữ liệu chung
+import { User, Team } from '../types'; // Import các kiểu dữ liệu chung
 
 // --- INTERFACES ---
 
-// Cấu trúc dữ liệu cho một Project (dựa trên tài liệu CSDL)
+export interface Project {
+  id: number;
+  keyCode: string; 
+  name: string;
+  description: string;
+  createdByUserId: number;
+  projectMembers?: { user: User }[]; 
+  projectTeams?: { team: Team }[];
+}
 
 // Cấu trúc cho kết quả tìm kiếm (User hoặc Team)
 export type SearchResult = 

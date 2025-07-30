@@ -1,5 +1,4 @@
 // src/components/InviteToProjectModal.tsx
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
     searchUsersAndTeamsForInvitation, 
@@ -16,7 +15,6 @@ interface InviteToProjectModalProps {
   onClose: () => void;
   project: Project | null;
 }
-
 export const InviteToProjectModal: React.FC<InviteToProjectModalProps> = ({ isOpen, onClose, project }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -43,7 +41,6 @@ export const InviteToProjectModal: React.FC<InviteToProjectModalProps> = ({ isOp
     }, 500),
     [project]
   );
-
   useEffect(() => {
     debouncedSearch(searchTerm);
     return () => debouncedSearch.cancel();
@@ -81,7 +78,6 @@ export const InviteToProjectModal: React.FC<InviteToProjectModalProps> = ({ isOp
       alert(`Gửi lời mời thất bại. Có thể họ đã ở trong dự án hoặc đã nhận được lời mời.`);
     }
   };
-
   if (!isOpen || !project) return null;
 
   return (
@@ -130,7 +126,6 @@ export const InviteToProjectModal: React.FC<InviteToProjectModalProps> = ({ isOp
               </div>
             );
           })}
-
           {!isLoading && results.length === 0 && searchTerm.length > 1 && (
             <p className="text-center text-gray-500 py-6">Không tìm thấy kết quả phù hợp.</p>
           )}
