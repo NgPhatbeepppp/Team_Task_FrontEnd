@@ -19,10 +19,26 @@ export interface TeamMember {
 // Định nghĩa cấu trúc cho Team
 export interface Team {
     id: number;
+    keyCode: string; 
     name: string;
     description: string | null;
     createdByUserId: number;
-    teamMembers: TeamMember[]; 
+    teamMembers: {
+        userId: number;
+        teamId: number;
+        roleInTeam: 'TeamLeader' | 'Member';
+        user: User;
+    }[]; 
+}
+
+export interface Project {
+  id: number;
+  keyCode: string; 
+  name: string;
+  description: string;
+  createdByUserId: number;
+  projectMembers?: { user: User }[]; 
+  projectTeams?: { team: Team }[];
 }
 // Định nghĩa cấu trúc cho TaskItem
 export interface TaskItem {

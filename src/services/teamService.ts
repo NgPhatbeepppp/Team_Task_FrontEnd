@@ -12,6 +12,7 @@ export interface TeamMember {
 export interface Team {
     id: number;
     name: string;
+    keyCode: string; 
     description: string;
     createdByUserId: number;
     teamMembers: TeamMember[];

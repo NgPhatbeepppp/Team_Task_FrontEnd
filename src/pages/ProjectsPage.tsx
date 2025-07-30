@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import ProjectCard from '../components/ProjectCard';
 import { InviteToProjectModal } from '../components/InviteToProjectModal';
-import { getMyProjects, createProject, Project } from '../services/projectService';
+import { getMyProjects, createProject } from '../services/projectService';
+import { Project } from '../types';
 import { useAuth } from '../hooks/useAuth';
 
 const ProjectsPage = () => {

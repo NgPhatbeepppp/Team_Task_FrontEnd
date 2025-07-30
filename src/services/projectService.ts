@@ -1,20 +1,11 @@
 // src/services/projectService.ts
 
 import api from './api';
-import { User, Team } from '../types'; // Import các kiểu dữ liệu chung
+import { User, Team, Project } from '../types'; // Import các kiểu dữ liệu chung
 
 // --- INTERFACES ---
 
 // Cấu trúc dữ liệu cho một Project (dựa trên tài liệu CSDL)
-export interface Project {
-  id: number;
-  name: string;
-  description: string;
-  createdByUserId: number;
-  // Các thông tin này có thể cần để hiển thị trên card
-  projectMembers?: { user: User }[]; 
-  projectTeams?: { team: Team }[];
-}
 
 // Cấu trúc cho kết quả tìm kiếm (User hoặc Team)
 export type SearchResult = 
@@ -110,12 +101,12 @@ export const inviteUserToProject = async (projectId: number, identifier: string)
 };
 
 /**
- * SỬA LỖI PAYLOAD: Gửi lời mời một Team vào dự án.
+ * Gửi lời mời một Team vào dự án bằng KeyCode.
  * Backend: POST /api/projects/{projectId}/invitations/team
  * @param projectId ID của dự án.
- * @param invitedTeamId ID của nhóm được mời.
+ * @param teamKeyCode KeyCode của nhóm được mời.
  */
-export const inviteTeamToProject = async (projectId: number, invitedTeamId: number): Promise<void> => {
-    // Backend yêu cầu một object chứa 'invitedTeamId'
-    await api.post(`/projects/${projectId}/invitations/team`, { invitedTeamId });
+export const inviteTeamToProject = async (projectId: number, teamKeyCode: string): Promise<void> => {
+    // Gửi đi một object chứa thuộc tính "teamKeyCode" theo yêu cầu mới
+    await api.post(`/projects/${projectId}/invitations/team`, { teamKeyCode });
 };

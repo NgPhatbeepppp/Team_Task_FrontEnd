@@ -6,11 +6,11 @@ import {
     inviteUserToProject, 
     inviteTeamToProject,
     SearchResult,
-    Project
+    
 } from '../services/projectService';
 import { debounce } from 'lodash';
 import { User, Users, Search, Loader2 } from 'lucide-react';
-
+import { Project } from '../types'; // Import kiểu dữ liệu Project
 interface InviteToProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -71,7 +71,7 @@ export const InviteToProjectModal: React.FC<InviteToProjectModalProps> = ({ isOp
         await inviteUserToProject(project.id, item.data.username); 
       } else {
         // Lời gọi này đã đúng với service mới
-        await inviteTeamToProject(project.id, item.data.id);
+        await inviteTeamToProject(project.id, String(item.data.id));
       }
       // Thêm ID vào danh sách đã mời để cập nhật UI
       setInvitedIds(prev => new Set(prev).add(id));

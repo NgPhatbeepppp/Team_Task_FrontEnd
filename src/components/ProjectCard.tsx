@@ -1,8 +1,8 @@
 // src/components/ProjectCard.tsx (Cập nhật)
 
-import React from 'react';
-import { useNavigate } from 'react-router-dom'; // ✅ THÊM MỚI
-import { Project } from '../services/projectService';
+import React, { useMemo } from 'react'; 
+import { useNavigate } from 'react-router-dom';
+import { Project } from '../types'; // Import kiểu dữ liệu Project
 import { UserPlus, Users } from 'lucide-react';
 
 interface ProjectCardProps {
@@ -11,18 +11,33 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onOpenInviteModal }) => {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
-  //  Hàm xử lý khi click vào card
+  // ✅ TÍNH TOÁN TỔNG SỐ THÀNH VIÊN DUY NHẤT
+  // Sử dụng useMemo để chỉ tính toán lại khi project thay đổi
+  const totalUniqueMembers = useMemo(() => {
+    const memberIds = new Set<number>();
+
+    // 1. Thêm các thành viên riêng lẻ
+    project.projectMembers?.forEach(pm => memberIds.add(pm.user.id));
+
+    // 2. Thêm các thành viên từ các nhóm
+    project.projectTeams?.forEach(pt => {
+      pt.team.teamMembers.forEach(tm => memberIds.add(tm.userId));
+    });
+
+    return memberIds.size;
+  }, [project]);
+
+  // Hàm xử lý khi click vào card
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Ngăn chặn điều hướng khi click vào nút "Mời"
     if ((e.target as HTMLElement).closest('button')) return;
     navigate(`/project/${project.id}`);
   };
 
   return (
     <div 
-      className="bg-white rounded-lg shadow-lg p-5 flex flex-col h-full transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5 cursor-pointer" // ✅ THÊM MỚI: cursor-pointer
+      className="bg-white rounded-lg shadow-lg p-5 flex flex-col h-full transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5 cursor-pointer"
       onClick={handleCardClick} 
     >
       <div className="flex justify-between items-start mb-3">
@@ -36,7 +51,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onOpenInviteModal })
       <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
         <div className="flex items-center text-sm text-gray-500">
           <Users size={16} className="mr-2" />
-          <span>{project.projectMembers?.length || 0} thành viên</span>
+          {/* ✅ HIỂN THỊ SỐ LƯỢNG MỚI */}
+          <span>{totalUniqueMembers} thành viên</span>
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onOpenInviteModal(project); }}
