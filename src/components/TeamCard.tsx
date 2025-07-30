@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Team } from '../services/teamService';
-import { UserPlus, Key, Copy } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 interface TeamCardProps {
   team: Team;
   currentUserRole: 'TeamLeader' | 'Member';
@@ -33,18 +33,12 @@ const TeamCard: React.FC<TeamCardProps> = ({
   onOpenInviteModal,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button, ul')) return;
     onNavigateToDetails(team.id);
   };
-const handleCopyKeyCode = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(team.keyCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000); // Reset trạng thái sau 2 giây
-  };
+
   const membersToShow = team.teamMembers.slice(0, 4);
   const extraMembersCount = team.teamMembers.length > 4 ? team.teamMembers.length - 4 : 0;
 
