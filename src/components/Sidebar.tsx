@@ -1,81 +1,75 @@
-// src/components/Sidebar.tsx (đã cập nhật chức năng đăng xuất)
-
-import React, { useState } from 'react';
+// src/components/Sidebar.tsx 
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth'; // <<< 1. IMPORT useAuth hook
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { getMyProjects, Project } from '../services/projectService'; // ✅ 1. IMPORT
 import {
-  HomeIcon,
-  UserGroupIcon,
-  FolderIcon,
-  DocumentTextIcon,
-  CalendarIcon,
-  ChatBubbleLeftIcon,
-  Cog6ToothIcon,
-  UserIcon,
-  ArrowLeftOnRectangleIcon, // <<< 2. IMPORT ICON ĐĂNG XUẤT
-  BellIcon,
+  HomeIcon, UserGroupIcon, FolderIcon, DocumentTextIcon, CalendarIcon,
+  ChatBubbleLeftIcon, Cog6ToothIcon, UserIcon, ArrowLeftOnRectangleIcon,
+  BellIcon, ChevronRightIcon, FolderOpenIcon
 } from '@heroicons/react/24/outline';
 
-type MenuItem = [string, React.ForwardRefExoticComponent<Omit<React.SVGProps<SVGSVGElement>, "ref"> & { title?: string; titleId?: string; } & React.RefAttributes<SVGSVGElement>>];
-
-const menuItems: MenuItem[] = [
-  ['Trang chủ', HomeIcon],
-  ['Quản lý nhóm', UserGroupIcon],
-  ['Quản lý dự án', FolderIcon],
-  ['Nhiệm vụ', DocumentTextIcon],
-  ['Lời mời & Thông báo', BellIcon],
-  ['Lịch', CalendarIcon],
-  ['Cuộc trò chuyện', ChatBubbleLeftIcon],
-  ['Cài đặt nâng cao', Cog6ToothIcon],
-  ['Tài khoản cá nhân', UserIcon],
-];
-
-const pathMap: { [key: string]: string } = {
-    'Trang chủ': '/',
-    'Quản lý nhóm': '/teams',
-    'Quản lý dự án': '/projects',
-    'Nhiệm vụ': '/tasks',
-    'Lời mời & Thông báo': '/notifications',
-    'Lịch': '/calendar',
-    'Cuộc trò chuyện': '/chat',
-    'Cài đặt nâng cao': '/settings',
-    'Tài khoản cá nhân': '/profile'
+// --- Types & Constants ---
+type MenuItem = {
+  label: string;
+  icon: React.ElementType;
+  path: string;
+  isProjectMenu?: boolean; // Đánh dấu mục đặc biệt
 };
 
+const menuItems: MenuItem[] = [
+  { label: 'Trang chủ', icon: HomeIcon, path: '/' },
+  { label: 'Quản lý nhóm', icon: UserGroupIcon, path: '/teams' },
+  { label: 'Quản lý dự án', icon: FolderIcon, path: '/projects', isProjectMenu: true }, // Đánh dấu đây là menu dự án
+  { label: 'Nhiệm vụ', icon: DocumentTextIcon, path: '/tasks' },
+  { label: 'Lời mời & Thông báo', icon: BellIcon, path: '/notifications' },
+  { label: 'Lịch', icon: CalendarIcon, path: '/calendar' },
+  { label: 'Cuộc trò chuyện', icon: ChatBubbleLeftIcon, path: '/chat' },
+  { label: 'Cài đặt nâng cao', icon: Cog6ToothIcon, path: '/settings' },
+  { label: 'Tài khoản cá nhân', icon: UserIcon, path: '/profile' },
+];
 
-interface SidebarProps {
-  activeItem: string;
-}
-
-export default function Sidebar({ activeItem }: SidebarProps) {
+// --- Component chính ---
+export default function Sidebar({ activeItem }: { activeItem: string }) {
   const [isOpen, setIsOpen] = useState(false);
-  const { logout } = useAuth(); // <<< 3. LẤY HÀM LOGOUT TỪ AUTH CONTEXT
-  const navigate = useNavigate();
+  const [isProjectsExpanded, setIsProjectsExpanded] = useState(false); // ✅ 2. STATE CHO MENU CON
+  const [myProjects, setMyProjects] = useState<Project[]>([]); // ✅ 3. STATE LƯU DỰ ÁN
 
-  // Logic để mở sidebar trên màn hình lớn
-  React.useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setIsOpen(true);
-      } else {
-        setIsOpen(false);
-      }
-    };
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // ✅ 4. LẤY DANH SÁCH DỰ ÁN KHI COMPONENT MOUNT
+  useEffect(() => {
+    getMyProjects()
+      .then(projects => setMyProjects(projects))
+      .catch(err => console.error("Không thể tải danh sách dự án cho sidebar:", err));
+  }, []);
+
+  // Mở menu con nếu đang ở trang dự án
+  useEffect(() => {
+    if (location.pathname.startsWith('/project')) {
+      setIsProjectsExpanded(true);
+    }
+  }, [location.pathname]);
+  
+  // Logic responsive
+  useEffect(() => {
+    const handleResize = () => setIsOpen(window.innerWidth >= 768);
     window.addEventListener('resize', handleResize);
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // <<< 4. TẠO HÀM XỬ LÝ ĐĂNG XUẤT >>>
   const handleLogout = () => {
     if (window.confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
       logout();
-      // Logic trong App.tsx sẽ tự động điều hướng về trang đăng nhập
-      // Tuy nhiên, có thể thêm navigate('/login') để đảm bảo điều hướng ngay lập tức
       navigate('/login');
     }
   };
+
+  const projectsToShow = myProjects.slice(0, 3);
 
   return (
     <>
@@ -102,22 +96,70 @@ export default function Sidebar({ activeItem }: SidebarProps) {
             </div>
             <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
               <ul>
-                {menuItems.map(([label, Icon]) => (
+                {menuItems.map(({ label, icon: Icon, path, isProjectMenu }) => (
                   <li key={label}>
-                    <Link to={pathMap[label] || '/'} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                        label === activeItem
-                          ? 'bg-indigo-50 text-indigo-700 font-semibold'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Icon className="w-6 h-6 shrink-0" />
-                      <span>{label}</span>
-                    </Link>
+                    {isProjectMenu ? (
+                      // ✅ 5. RENDER MENU DỰ ÁN ĐẶC BIỆT
+                      <div>
+                        <div
+                          onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
+                          className={`flex items-center justify-between gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                            (activeItem === label || isProjectsExpanded)
+                              ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                              : 'text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Icon className="w-6 h-6 shrink-0" />
+                            <span>{label}</span>
+                          </div>
+                          <ChevronRightIcon className={`w-4 h-4 transition-transform ${isProjectsExpanded ? 'rotate-90' : ''}`} />
+                        </div>
+                        <AnimatePresence>
+                          {isProjectsExpanded && (
+                            <motion.ul
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="pl-6 mt-1 space-y-1 overflow-hidden"
+                            >
+                              {projectsToShow.map(project => (
+                                <li key={project.id}>
+                                  <Link to={`/project/${project.id}`} className={`flex items-center gap-3 p-2 rounded-md text-sm transition-colors ${
+                                      location.pathname === `/project/${project.id}` ? 'bg-gray-200 text-gray-900' : 'text-gray-500 hover:bg-gray-100'
+                                    }`}
+                                  >
+                                    <FolderOpenIcon className="w-5 h-5 shrink-0" />
+                                    <span className="truncate">{project.name}</span>
+                                  </Link>
+                                </li>
+                              ))}
+                              <li>
+                                <Link to="/projects" className="flex items-center gap-3 p-2 rounded-md text-sm text-indigo-600 hover:bg-indigo-50 font-medium">
+                                  Xem tất cả dự án...
+                                </Link>
+                              </li>
+                            </motion.ul>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    ) : (
+                      // Render các mục menu bình thường
+                      <Link to={path} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                          label === activeItem
+                            ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        <Icon className="w-6 h-6 shrink-0" />
+                        <span>{label}</span>
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
             </nav>
-            {/* <<< 5. THÊM NÚT ĐĂNG XUẤT VÀO CUỐI SIDEBAR >>> */}
+            {/* Nút đăng xuất */}
             <div className="p-4 mt-auto border-t border-gray-100">
               <button
                 onClick={handleLogout}
@@ -128,20 +170,6 @@ export default function Sidebar({ activeItem }: SidebarProps) {
               </button>
             </div>
           </motion.aside>
-        )}
-      </AnimatePresence>
-
-      {/* Lớp phủ mờ trên mobile */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
-            onClick={() => setIsOpen(false)}
-          />
         )}
       </AnimatePresence>
     </>

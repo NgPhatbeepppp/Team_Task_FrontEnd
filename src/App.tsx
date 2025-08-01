@@ -7,6 +7,10 @@ import RegisterPage from './pages/RegisterPage';
 import UserProfilePage from './pages/UserProfilePage';
 import TeamPage from './pages/TeamPage'; 
 import NotificationsPage from './pages/NotificationsPage';
+import ProjectsPage from './pages/ProjectsPage';
+import ProjectWorkspacePage from './pages/ProjectWorkspacePage'; 
+import ProjectSettingsPage from './pages/ProjectSettingsPage';
+
 
 // Component trung gian để xử lý logic Route được bảo vệ
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -54,6 +58,33 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <UserProfilePage />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/projects" 
+        element={
+          <ProtectedRoute>
+            <ProjectsPage />
+          </ProtectedRoute>
+        } 
+      />
+       {/* CHO TRANG CHI TIẾT DỰ ÁN */}
+      <Route 
+        path="/project/:projectId" 
+        element={
+          <ProtectedRoute>
+            {/* Trang chi tiết dự án */}
+            <ProjectWorkspacePage /> 
+          </ProtectedRoute>
+        } 
+      />
+       {/* ROUTE CHO TRANG CÀI ĐẶT */}
+      <Route 
+        path="/project/:projectId/settings" 
+        element={
+          <ProtectedRoute>
+            <ProjectSettingsPage />
           </ProtectedRoute>
         } 
       />

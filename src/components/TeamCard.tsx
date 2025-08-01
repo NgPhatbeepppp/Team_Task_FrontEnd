@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Team } from '../services/teamService';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Key } from 'lucide-react';
 interface TeamCardProps {
   team: Team;
   currentUserRole: 'TeamLeader' | 'Member';
@@ -27,8 +27,7 @@ const TeamCard: React.FC<TeamCardProps> = ({
   team,
   currentUserRole,
   onNavigateToDetails,
-  onDeleteTeam,
-  onLeaveTeam,
+  onDeleteTeam,  onLeaveTeam,
   onOpenGrantLeaderModal,
   onOpenInviteModal,
 }) => {
@@ -90,7 +89,12 @@ const TeamCard: React.FC<TeamCardProps> = ({
       </div>
 
       <p className="text-sm text-gray-600 truncate flex-grow mb-4">{team.description || 'Không có mô tả'}</p>
-
+ <div className="mb-4 flex items-center">
+        <Key size={14} className="text-gray-400 mr-2" />
+        <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
+          {team.keyCode}
+        </span>
+      </div>
       <div className="flex items-center mt-auto">
         <div className="flex">
           {membersToShow.map(member => (
