@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar';
 import TeamCard from '../components/TeamCard';
 import { InviteMemberModal } from '../components/InviteMemberModal';
 import { SelectMemberModal } from '../components/SelectMemberModal';
+import { CreateTeamModal } from '../components/CreateTeamModal'; // ✨ 1. IMPORT MODAL TẠO NHÓM
 import {
   getMyTeams,
   createTeam,
@@ -20,9 +21,9 @@ const TeamPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    // Tách state cho từng modal để quản lý rõ ràng
     const [isGrantLeaderModalOpen, setIsGrantLeaderModalOpen] = useState(false);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // ✨ 2. THÊM STATE CHO MODAL TẠO NHÓM
     const [selectedTeamForModal, setSelectedTeamForModal] = useState<Team | null>(null);
 
     const { user } = useAuth();
@@ -47,13 +48,11 @@ const TeamPage = () => {
         if (currentUserId) {
             fetchTeams();
         } else {
-            setLoading(false); // Dừng loading nếu không có user
+            setLoading(false);
         }
     }, [currentUserId]);
 
     // --- MODAL HANDLERS ---
-
-    // Mở/Đóng Modal Trao quyền
     const handleOpenGrantLeaderModal = (team: Team) => {
         setSelectedTeamForModal(team);
         setIsGrantLeaderModalOpen(true);
@@ -63,7 +62,6 @@ const TeamPage = () => {
         setSelectedTeamForModal(null);
     };
 
-    // Mở/Đóng Modal Mời thành viên
     const handleOpenInviteModal = (team: Team) => {
         setSelectedTeamForModal(team);
         setIsInviteModalOpen(true);
@@ -81,7 +79,7 @@ const TeamPage = () => {
             try {
                 await grantLeaderRole(selectedTeamForModal.id, targetUserId);
                 alert('Trao quyền thành công!');
-                fetchTeams(); // Tải lại để cập nhật vai trò
+                fetchTeams();
             } catch (err) {
                 alert('Trao quyền thất bại.');
             } finally {
@@ -95,22 +93,19 @@ const TeamPage = () => {
         try {
             await inviteUserToTeam(selectedTeamForModal.id, targetUserId);
             alert('Đã gửi lời mời thành công!');
-            // Không cần đóng modal ngay, để trưởng nhóm có thể mời nhiều người
         } catch (err) {
             alert('Gửi lời mời thất bại. Người dùng có thể đã ở trong nhóm hoặc đã có lời mời đang chờ.');
         }
     };
-
-    const handleCreateTeam = async () => {
-        const name = prompt('Nhập tên nhóm mới:');
-        if (name && name.trim()) {
-            const description = prompt('Nhập mô tả cho nhóm (không bắt buộc):') || '';
-            try {
-                await createTeam({ name, description });
-                fetchTeams();
-            } catch (err) {
-                alert('Tạo nhóm thất bại.');
-            }
+    
+    // ✨ 3. CẬP NHẬT HÀM ĐỂ NHẬN DỮ LIỆU TỪ MODAL
+    const handleCreateTeam = async (teamData: { name: string; description: string | null }) => {
+        try {
+            await createTeam(teamData);
+            fetchTeams();
+        } catch (err) {
+            alert('Tạo nhóm thất bại.');
+            throw err; // Ném lỗi để modal không tự đóng
         }
     };
 
@@ -180,7 +175,8 @@ const TeamPage = () => {
                     <header className="flex justify-between items-center mb-8">
                         <h1 className="text-3xl font-bold text-gray-800">Nhóm Của Tôi</h1>
                         <button
-                            onClick={handleCreateTeam}
+                            // ✨ 4. THAY ĐỔI onClick ĐỂ MỞ MODAL
+                            onClick={() => setIsCreateModalOpen(true)}
                             className="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition"
                         >
                             + Tạo Nhóm Mới
@@ -189,6 +185,13 @@ const TeamPage = () => {
                     {renderContent()}
                 </div>
             </main>
+
+            {/* ✨ 5. RENDER CÁC MODAL */}
+            <CreateTeamModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSubmit={handleCreateTeam}
+            />
 
             {selectedTeamForModal && currentUserId && (
                 <>

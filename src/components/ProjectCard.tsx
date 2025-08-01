@@ -1,5 +1,4 @@
-// src/components/ProjectCard.tsx (Cập nhật)
-
+// src/components/ProjectCard.tsx 
 import React, { useMemo } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import { Project } from '../types'; // Import kiểu dữ liệu Project
@@ -13,16 +12,16 @@ interface ProjectCardProps {
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onOpenInviteModal }) => {
   const navigate = useNavigate();
 
-  // ✅ TÍNH TOÁN TỔNG SỐ THÀNH VIÊN DUY NHẤT
+  // TÍNH TOÁN TỔNG SỐ THÀNH VIÊN DUY NHẤT
   // Sử dụng useMemo để chỉ tính toán lại khi project thay đổi
   const totalUniqueMembers = useMemo(() => {
     const memberIds = new Set<number>();
 
     // 1. Thêm các thành viên riêng lẻ
-    project.projectMembers?.forEach(pm => memberIds.add(pm.user.id));
+    project.members?.forEach(pm => memberIds.add(pm.user.id));
 
     // 2. Thêm các thành viên từ các nhóm
-    project.projectTeams?.forEach(pt => {
+    project.teams?.forEach(pt => {
       pt.team.teamMembers.forEach(tm => memberIds.add(tm.userId));
     });
 

@@ -29,7 +29,7 @@ export const getMyTeams = async (): Promise<Team[]> => {
     return response.data;
 };
 
-export const createTeam = async (teamData: { name: string; description: string }): Promise<Team> => {
+export const createTeam = async (teamData: { name: string; description: string | null }): Promise<Team> => {
     const response = await api.post<Team>('/team', teamData);
     return response.data;
 };
@@ -66,5 +66,17 @@ export const searchUsersForInvitation = async (teamId: number, query: string): P
     const response = await api.get<SearchedUser[]>(`/team/${teamId}/invitations/search-users`, {
         params: { query }
     });
+    return response.data;
+};
+/**
+ * Lấy thông tin team bằng KeyCode.
+ * Backend: GET /api/team/by-keycode/{keyCode}
+ */
+export const getTeamByKeyCode = async (keyCode: string): Promise<Team> => {
+    const trimmedKeyCode = keyCode.trim();
+    if (!trimmedKeyCode) {
+        return Promise.reject(new Error('KeyCode is empty.'));
+    }
+    const response = await api.get<Team>(`/team/by-keycode/${trimmedKeyCode}`);
     return response.data;
 };

@@ -1,9 +1,8 @@
-// src/pages/ProjectsPage.tsx
-
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import ProjectCard from '../components/ProjectCard';
 import { InviteToProjectModal } from '../components/InviteToProjectModal';
+import { CreateProjectModal } from '../components/CreateProjectModal'; // ✨ THÊM MỚI
 import { getMyProjects, createProject } from '../services/projectService';
 import { Project } from '../types';
 import { useAuth } from '../hooks/useAuth';
@@ -12,7 +11,10 @@ const ProjectsPage = () => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
+    // ✨ Tách state cho các modal
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const { user } = useAuth();
 
@@ -49,16 +51,14 @@ const ProjectsPage = () => {
     };
 
     // --- ACTION HANDLERS ---
-    const handleCreateProject = async () => {
-        const name = prompt('Nhập tên dự án mới:');
-        if (name && name.trim()) {
-            const description = prompt('Nhập mô tả cho dự án (không bắt buộc):') || '';
-            try {
-                await createProject({ name, description });
-                fetchProjects(); // Tải lại danh sách dự án
-            } catch (err) {
-                alert('Tạo dự án thất bại.');
-            }
+    const handleCreateProject = async (projectData: { name: string; description: string | null }) => {
+        try {
+            await createProject(projectData);
+            fetchProjects(); // Tải lại danh sách dự án
+        } catch (err) {
+            alert('Tạo dự án thất bại.');
+            // Re-throw lỗi để modal biết và không tự đóng
+            throw err;
         }
     };
     
@@ -89,7 +89,7 @@ const ProjectsPage = () => {
                     <header className="flex justify-between items-center mb-8">
                         <h1 className="text-4xl font-bold text-gray-800">Dự Án Của Tôi</h1>
                         <button
-                            onClick={handleCreateProject}
+                            onClick={() => setIsCreateModalOpen(true)} // ✨ THAY ĐỔI: Chỉ mở modal
                             className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75 transition-transform hover:scale-105"
                         >
                             + Tạo Dự Án Mới
@@ -99,12 +99,18 @@ const ProjectsPage = () => {
                 </div>
             </main>
 
+            {/* ✨ Sử dụng các modal */}
             <InviteToProjectModal
                 isOpen={isInviteModalOpen}
                 onClose={handleCloseInviteModal}
                 project={selectedProject}
             />
+            <CreateProjectModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSubmit={handleCreateProject}
+            />
         </div>
     );
 };
-export default ProjectsPage; 
+export default ProjectsPage;

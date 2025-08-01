@@ -37,8 +37,8 @@ export interface Project {
   name: string;
   description: string;
   createdByUserId: number;
-  projectMembers?: { user: User }[]; 
-  projectTeams?: { team: Team }[];
+   members?: { user: User }[]; 
+    teams?: { team: Team }[];
 }
 // Định nghĩa cấu trúc cho TaskItem
 export interface TaskItem {

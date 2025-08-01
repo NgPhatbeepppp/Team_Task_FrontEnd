@@ -36,13 +36,14 @@ export const getMyProjects = async (): Promise<Project[]> => {
  * Tạo một dự án mới.
  * Backend: POST /api/project
  */
-export const createProject = async (projectData: { name: string; description: string }): Promise<Project> => {
+export const createProject = async (projectData: { name: string; description: string | null }): Promise<Project> => {
     const response = await api.post<Project>('/project', projectData);
     return response.data;
 };
 
+
 /**
- * HÀM MỚI: Chỉ tìm kiếm người dùng.
+ * Chỉ tìm kiếm người dùng.
  * Backend: GET /api/users/search
  */
 const searchUsers = async (query: string): Promise<User[]> => {
@@ -67,7 +68,7 @@ const searchTeams = async (query: string): Promise<Team[]> => {
 };
 
 /**
- * ✅ THÊM MỚI: Lấy thông tin chi tiết một dự án.
+ * Lấy thông tin chi tiết một dự án.
  * Backend: GET /api/project/{id}
  */
 export const getProjectById = async (projectId: number): Promise<Project> => {
@@ -117,4 +118,11 @@ export const inviteUserToProject = async (projectId: number, identifier: string)
 export const inviteTeamToProject = async (projectId: number, teamKeyCode: string): Promise<void> => {
     // Gửi đi một object chứa thuộc tính "teamKeyCode" theo yêu cầu mới
     await api.post(`/projects/${projectId}/invitations/team`, { teamKeyCode });
+};
+/**
+ * Xóa một thành viên khỏi dự án.
+ * Backend: DELETE /api/project/{projectId}/members/{targetUserId}
+ */
+export const removeUserFromProject = async (projectId: number, targetUserId: number): Promise<void> => {
+    await api.delete(`/project/${projectId}/members/${targetUserId}`);
 };
