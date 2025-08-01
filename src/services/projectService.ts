@@ -11,8 +11,8 @@ export interface Project {
   name: string;
   description: string;
   createdByUserId: number;
-  projectMembers?: { user: User }[]; 
-  projectTeams?: { team: Team }[];
+  members?: { user: User }[]; 
+  teams?: { team: Team }[];
 }
 
 // Cấu trúc cho kết quả tìm kiếm (User hoặc Team)
@@ -76,7 +76,7 @@ export const getProjectById = async (projectId: number): Promise<Project> => {
     return response.data;
 };
 /**
- *  Tìm kiếm cả Users và Teams để mời vào một dự án.
+ * Tìm kiếm cả Users và Teams để mời vào một dự án.
  * Hàm này sẽ gọi 2 API riêng biệt và gộp kết quả.
  * @param projectId ID của dự án đang mời (hiện tại chưa dùng nhưng giữ lại cho logic sau này).
  * @param query Chuỗi tìm kiếm.
@@ -125,4 +125,12 @@ export const inviteTeamToProject = async (projectId: number, teamKeyCode: string
  */
 export const removeUserFromProject = async (projectId: number, targetUserId: number): Promise<void> => {
     await api.delete(`/project/${projectId}/members/${targetUserId}`);
+};
+
+/**
+ * MỚI: Xóa một team khỏi dự án.
+ * Backend: DELETE /api/project/{projectId}/teams/{teamId}
+ */
+export const removeTeamFromProject = async (projectId: number, teamId: number): Promise<void> => {
+    await api.delete(`/project/${projectId}/teams/${teamId}`);
 };
