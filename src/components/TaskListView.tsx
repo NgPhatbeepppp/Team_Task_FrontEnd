@@ -1,3 +1,5 @@
+// src/components/TaskListView.tsx
+
 import React from 'react';
 import { TaskItem } from '../types';
 import { List } from 'lucide-react';
@@ -20,9 +22,14 @@ export const TaskListView: React.FC<TaskListViewProps> = ({ tasks }) => {
           tasks.map(task => (
             <li key={task.id} className="flex items-center justify-between p-4 border-b last:border-b-0 hover:bg-gray-50">
               <span className="font-medium text-gray-800">{task.title}</span>
+              
+             
               <span className="text-sm text-gray-500">
-                {task.assignedTo ? task.assignedTo.username : 'Chưa giao'}
+                {task.taskAssignees && task.taskAssignees.length > 0
+                  ? task.taskAssignees.map(assignee => assignee.user.username).join(', ')
+                  : 'Chưa giao'}
               </span>
+
               {/* Thêm các thông tin khác như deadline, priority sau */}
             </li>
           ))

@@ -84,7 +84,7 @@ const ProjectsPage = () => {
     return (
         <div className="flex min-h-screen bg-gray-50">
             <Sidebar activeItem="Quản lý dự án" />
-            <main className="flex-grow p-6 sm:p-8">
+            <main className="flex-grow p-6 sm:p-8 md:ml-64">
                 <div className="max-w-7xl mx-auto">
                     <header className="flex justify-between items-center mb-8">
                         <h1 className="text-4xl font-bold text-gray-800">Dự Án Của Tôi</h1>

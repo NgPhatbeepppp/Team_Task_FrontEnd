@@ -133,7 +133,7 @@ const NotificationsPage: React.FC = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar activeItem="Lời mời & Thông báo" />
-      <main className="flex-grow p-6 sm:p-8">
+      <main className="flex-grow p-6 sm:p-8 md:ml-64">
         <div className="max-w-4xl mx-auto">
           <header className="mb-8">
             <h1 className="text-3xl font-bold text-gray-800">Lời mời & Thông báo</h1>

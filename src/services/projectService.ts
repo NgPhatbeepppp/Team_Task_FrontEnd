@@ -22,7 +22,19 @@ export type SearchResult =
 
 
 // --- API FUNCTIONS ---
-
+/**
+ * Tìm kiếm thành viên trong một dự án.
+ * Backend: GET /api/projects/{projectId}/members/search
+ * @param projectId ID của dự án.
+ * @param query Chuỗi tìm kiếm (username hoặc fullName).
+ * @returns Danh sách người dùng khớp với tìm kiếm.
+ */
+export const searchProjectMembers = async (projectId: number, query: string): Promise<User[]> => {
+    const response = await api.get<User[]>(`/project/${projectId}/members/search`, {
+        params: { q: query }
+    });
+    return response.data;
+};
 /**
  * Lấy danh sách các dự án mà người dùng hiện tại tham gia.
  * Backend: GET /api/project/mine

@@ -17,8 +17,9 @@ export interface ProjectStatus {
 
 /**
  * Dữ liệu cần thiết để tạo một trạng thái mới.
+ * projectId sẽ được lấy từ URL, không cần truyền vào body.
  */
-export type CreateStatusDto = Pick<ProjectStatus, 'name' | 'projectId'> & {
+export type CreateStatusDto = Pick<ProjectStatus, 'name'> & {
   color?: string;
 };
 
@@ -38,7 +39,8 @@ export type UpdateStatusDto = Pick<ProjectStatus, 'id' | 'name' | 'color'>;
  */
 export const getProjectStatuses = async (projectId: number): Promise<ProjectStatus[]> => {
   const response = await api.get<ProjectStatus[]>(`/projects/${projectId}/statuses`);
-  return response.data;
+  // Sắp xếp lại theo 'order' để đảm bảo thứ tự đúng
+  return response.data.sort((a, b) => a.order - b.order);
 };
 
 /**
@@ -75,7 +77,6 @@ export const reorderProjectStatuses = async (projectId: number, statusIdsInOrder
 
 /**
  * Xóa một trạng thái khỏi dự án.
- * Lưu ý: API sẽ thất bại nếu trạng thái này đang được sử dụng.
  * Backend: DELETE /api/statuses/{statusId}
  * @param statusId ID của trạng thái cần xóa.
  */

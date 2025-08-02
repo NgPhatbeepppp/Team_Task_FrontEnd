@@ -170,7 +170,7 @@ const TeamPage = () => {
     return (
         <div className="flex min-h-screen bg-gray-100">
             <Sidebar activeItem="Quản lý nhóm" />
-            <main className="flex-grow p-6 sm:p-8">
+            <main className="flex-grow p-6 sm:p-8 md:ml-64">
                 <div className="max-w-7xl mx-auto">
                     <header className="flex justify-between items-center mb-8">
                         <h1 className="text-3xl font-bold text-gray-800">Nhóm Của Tôi</h1>

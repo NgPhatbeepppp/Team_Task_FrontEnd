@@ -49,7 +49,7 @@ export interface TaskItem {
     deadline: string | null;
     createdAt: string;
     statusId: number | null;
-    assignedToUserId: number | null;
-    assignedTo: User | null; // Lồng thông tin người được giao
+    
+    taskAssignees?: { user: User }[];
     projectId: number; // ID của dự án mà task này thuộc về
 }
