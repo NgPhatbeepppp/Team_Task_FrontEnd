@@ -23,11 +23,12 @@ const ProjectWorkspacePage = () => {
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
 
+  // ✨ SỬA LỖI TẠI ĐÂY: Thêm 'calendar' vào kiểu dữ liệu của state
   const [activeView, setActiveView] = useState<'list' | 'board' | 'calendar'>('list');
 
   const fetchProjectData = useCallback(async () => {
@@ -37,8 +38,6 @@ const ProjectWorkspacePage = () => {
       return;
     }
     try {
-      // Giữ lại trạng thái loading cũ để không bị giật màn hình
-      // setLoading(true); 
       const [projectDetails, fetchedTasks, fetchedStatuses] = await Promise.all([
         getProjectById(Number(projectId)),
         getTasksByProjectId(Number(projectId)),
@@ -59,6 +58,17 @@ const ProjectWorkspacePage = () => {
   useEffect(() => {
     fetchProjectData();
   }, [fetchProjectData]);
+
+    // Hàm chỉ fetch lại status, dùng khi thêm cột mới trên Kanban
+    const fetchOnlyStatuses = useCallback(async () => {
+        if (!projectId) return;
+        try {
+            const fetchedStatuses = await getProjectStatuses(Number(projectId));
+            setStatuses(fetchedStatuses);
+        } catch (error) {
+            console.error("Lỗi khi tải lại statuses:", error);
+        }
+    }, [projectId]);
 
   const handleCreateTask = async (taskData: Partial<Omit<TaskItem, 'taskAssignees'>> & { assignedUserIds?: number[] }) => {
     try {
@@ -101,29 +111,35 @@ const ProjectWorkspacePage = () => {
     if (error) {
       return <div className="text-center py-10 text-red-500">{error}</div>;
     }
-    
+
     switch(activeView) {
       case 'list':
         return <TaskListView tasks={tasks} statuses={statuses} onTaskUpdate={fetchProjectData} onTaskSelect={handleOpenTaskDetails} />;
       case 'board':
-        return <KanbanBoardView project={project} initialTasks={tasks} onTasksChange={fetchProjectData} />;
+        return <KanbanBoardView
+                  project={project}
+                  tasks={tasks}
+                  setTasks={setTasks}
+                  statuses={statuses}
+                  onStatusesChange={fetchOnlyStatuses}
+               />;
       case 'calendar':
         return <div className="text-center p-10">Chế độ xem Lịch sẽ được phát triển sau.</div>;
       default:
         return <TaskListView tasks={tasks} statuses={statuses} onTaskUpdate={fetchProjectData}  onTaskSelect={handleOpenTaskDetails} />;
     }
   };
-  
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       <Sidebar activeItem="Quản lý dự án" />
       <main className="flex-grow p-6 sm:p-8 flex flex-col md:ml-64">
         <div className="max-w-full mx-auto w-full flex flex-col flex-grow">
-          <ProjectHeader 
-            project={project} 
+          <ProjectHeader
+            project={project}
             onOpenCreateTaskModal={() => setIsCreateModalOpen(true)}
           />
-          <ViewSwitcher 
+          <ViewSwitcher
             activeView={activeView}
             onViewChange={setActiveView}
           />
@@ -132,9 +148,9 @@ const ProjectWorkspacePage = () => {
           </div>
         </div>
       </main>
-      
+
       {projectId && (
-        <CreateTaskModal 
+        <CreateTaskModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onSubmit={handleCreateTask}
@@ -142,7 +158,7 @@ const ProjectWorkspacePage = () => {
           statuses={statuses}
         />
       )}
-      
+
       <TaskDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}

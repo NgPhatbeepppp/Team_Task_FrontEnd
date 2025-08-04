@@ -101,7 +101,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, onCl
                 className="w-full p-2 border rounded-md"
               />
             </div>
-            {/* ==================================== */}
+            
           </div>
           <UserSearchInput
             projectId={task.projectId}
