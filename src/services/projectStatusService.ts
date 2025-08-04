@@ -66,15 +66,18 @@ export const updateProjectStatus = async (statusId: number, statusData: UpdateSt
 };
 
 /**
- * Sắp xếp lại thứ tự của các trạng thái trong một dự án.
+ * Cập nhật lại thứ tự của các cột trạng thái trong một dự án.
  * Backend: PUT /api/projects/{projectId}/statuses/reorder
  * @param projectId ID của dự án.
- * @param statusIdsInOrder Một mảng chứa các ID của trạng thái theo thứ tự mới.
+ * @param statusIdsInOrder Một mảng các ID của status theo thứ tự mới.
  */
-export const reorderProjectStatuses = async (projectId: number, statusIdsInOrder: number[]): Promise<void> => {
-  await api.put(`/projects/${projectId}/statuses/reorder`, { statusIdsInOrder });
+export const updateStatusesOrder = async (projectId: number, statusIdsInOrder: number[]): Promise<void> => {
+  // Backend yêu cầu một object, với key là 'statusIdsInOrder'
+  const requestBody = {
+    statusIdsInOrder
+  };
+  await api.put(`/projects/${projectId}/statuses/reorder`, requestBody);
 };
-
 /**
  * Xóa một trạng thái khỏi dự án.
  * Backend: DELETE /api/statuses/{statusId}
