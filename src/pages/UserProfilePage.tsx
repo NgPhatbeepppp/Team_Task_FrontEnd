@@ -4,6 +4,7 @@ import { Pencil } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import api from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast'; // Thêm hook useToast
 
 interface UserProfile {
   fullName?: string;
@@ -21,6 +22,7 @@ export default function UserProfilePage() {
   const [editedProfile, setEditedProfile] = useState<Partial<UserProfile>>({});
   const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const { addToast } = useToast(); // Sử dụng hook useToast
   
   // Xóa useEffect và state isDesktop
 
@@ -33,13 +35,13 @@ export default function UserProfilePage() {
       .catch(err => {
         console.error("Lỗi khi tải hồ sơ:", err);
         if (err.response?.status === 401) {
-          alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+          addToast({ message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', type: 'error' });
           logout();
         } else {
-          alert('Không thể tải dữ liệu hồ sơ.');
+          addToast({ message: 'Không thể tải dữ liệu hồ sơ.', type: 'error' });
         }
       });
-  }, [logout]);
+  }, [logout, addToast]);
 
   const handleEdit = (field: keyof UserProfile) => setEditField(field);
 
@@ -53,9 +55,9 @@ export default function UserProfilePage() {
       await api.put('/userprofile/me', editedProfile);
       setProfile(editedProfile as UserProfile);
       setEditField(null);
-      alert('Cập nhật thành công!');
+      addToast({ message: 'Cập nhật thành công!', type: 'success' });
     } catch (err) {
-      alert('Cập nhật thất bại');
+      addToast({ message: 'Cập nhật thất bại', type: 'error' });
     }
     setLoading(false);
   };

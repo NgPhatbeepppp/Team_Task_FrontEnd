@@ -1,183 +1,279 @@
-// src/pages/RegisterPage.tsx
-import React, { useState } from 'react';
-import { register as registerService } from '../services/authService';
-import { Link, useNavigate } from 'react-router-dom';
+// src/pages/TeamPage.tsx
+import React, { useState, useEffect } from 'react';
+import Sidebar from '../components/Sidebar';
+import TeamCard from '../components/TeamCard';
+import { InviteMemberModal } from '../components/InviteMemberModal';
+import { SelectMemberModal } from '../components/SelectMemberModal';
+import { CreateTeamModal } from '../components/CreateTeamModal';
+import { ConfirmationModal } from '../components/ConfirmationModal'; // Import ConfirmationModal
+import {
+  getMyTeams,
+  createTeam,
+  deleteTeam,
+  leaveTeam,
+  grantLeaderRole,
+  inviteUserToTeam,
+  Team,
+} from '../services/teamService';
 import { useAuth } from '../hooks/useAuth';
-import { Eye, EyeOff, CheckCircle } from 'lucide-react'; // <-- 1. Thêm icon CheckCircle
+import { Loader2 } from 'lucide-react';
+import { useToast } from '../hooks/useToast';
 
-export default function RegisterPage() {
-  const navigate = useNavigate();
-  const { login } = useAuth();
+const TeamPage = () => {
+    const [teams, setTeams] = useState<Team[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    
+    // States for modals
+    const [isGrantLeaderModalOpen, setIsGrantLeaderModalOpen] = useState(false);
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [selectedTeamForModal, setSelectedTeamForModal] = useState<Team | null>(null);
 
-  const [form, setForm] = useState({
-    username: '',
-    email: '',
-    password: '',
-    gender: 'Nam',
-    fullName: '',
-    phoneNumber: ''
-  });
-  
-  // --- 2. Thêm các state mới để quản lý trạng thái ---
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    // States for confirmation modal
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [confirmModalContent, setConfirmModalContent] = useState({ title: '', message: '', confirmText: 'Xác nhận' });
+    const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-    try {
-      const token = await registerService(form);
-      login(token);
+    const { user } = useAuth();
+    const { addToast } = useToast();
+    const currentUserId = user?.id;
 
-      // --- 3. Thay thế alert() bằng việc cập nhật state ---
-      setSuccessMessage('Đăng ký thành công! Đang chuyển hướng bạn đến trang cá nhân...');
-      setTimeout(() => {
-        navigate('/profile');
-      }, 3000); // Chuyển hướng sau 3 giây
+    const fetchTeams = async () => {
+        try {
+            setLoading(true);
+            const userTeams = await getMyTeams();
+            setTeams(userTeams);
+            setError(null);
+        } catch (err) {
+            setError('Không thể tải danh sách nhóm. Vui lòng thử lại.');
+            console.error("Lỗi khi fetch teams:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Đã có lỗi xảy ra.';
-      setError(errorMessage); // Hiển thị lỗi trên giao diện
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    useEffect(() => {
+        if (currentUserId) {
+            fetchTeams();
+        } else {
+            setLoading(false);
+        }
+    }, [currentUserId]);
 
-  return (
-    <div
-      className="fixed inset-0 flex items-center justify-center font-sans bg-cover bg-center"
-      style={{ backgroundImage: 'url(/background.png)' }}
-    >
-      <div className="relative w-11/12 max-w-4xl">
-        <h1 className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 md:right-0 md:top-auto md:translate-x-0 md:-translate-y-full text-5xl md:text-6xl font-bold text-black text-shadow-lg z-10 p-4">
-          Đăng Ký
-        </h1>
+    const handleOpenGrantLeaderModal = (team: Team) => {
+        setSelectedTeamForModal(team);
+        setIsGrantLeaderModalOpen(true);
+    };
+    const handleCloseGrantLeaderModal = () => {
+        setIsGrantLeaderModalOpen(false);
+        setSelectedTeamForModal(null);
+    };
 
-        <div className="relative z-0 p-8 md:p-12 pt-16 md:pt-12 bg-white/40 rounded-2xl shadow-2xl backdrop-blur-sm min-h-[550px]">
-          {/* --- 4. Hiển thị có điều kiện: form hoặc thông báo thành công --- */}
-          {successMessage ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <CheckCircle className="w-16 h-16 text-green-600 mb-4" />
-              <h3 className="text-2xl font-bold text-gray-800">Thành công!</h3>
-              <p className="mt-2 text-gray-700">{successMessage}</p>
+    const handleOpenInviteModal = (team: Team) => {
+        setSelectedTeamForModal(team);
+        setIsInviteModalOpen(true);
+    };
+    const handleCloseInviteModal = () => {
+        setIsInviteModalOpen(false);
+        setSelectedTeamForModal(null);
+    };
+    
+    // --- CẬP NHẬT LOGIC XÁC NHẬN ---
+    const handleGrantLeaderSelect = (targetUserId: number) => {
+        const team = selectedTeamForModal;
+        const member = team?.teamMembers.find(m => m.userId === targetUserId);
+        if (!team || !member) return;
+
+        setConfirmModalContent({
+            title: 'Xác nhận trao quyền',
+            message: `Bạn có chắc muốn trao quyền trưởng nhóm cho "${member.user.username}"? Hành động này không thể hoàn tác.`,
+            confirmText: 'Trao quyền'
+        });
+        
+        setConfirmAction(() => async () => {
+            try {
+                await grantLeaderRole(team.id, targetUserId);
+                addToast({ message: 'Trao quyền thành công!', type: 'success' });
+                fetchTeams(); // Tải lại danh sách nhóm để cập nhật vai trò
+            } catch (err) {
+                addToast({ message: 'Trao quyền thất bại.', type: 'error' });
+            } finally {
+                handleCloseGrantLeaderModal();
+            }
+        });
+
+        setIsGrantLeaderModalOpen(false); // Đóng modal chọn người
+        setIsConfirmModalOpen(true); // Mở modal xác nhận
+    };
+
+    const handleInviteMember = async (targetUserId: number) => {
+        if (!selectedTeamForModal) return;
+        try {
+            await inviteUserToTeam(selectedTeamForModal.id, targetUserId);
+            addToast({ message: 'Đã gửi lời mời thành công!', type: 'success' });
+        } catch (err) {
+            addToast({ message: 'Gửi lời mời thất bại. Người dùng có thể đã ở trong nhóm hoặc đã có lời mời đang chờ.', type: 'error' });
+        }
+    };
+    
+    const handleCreateTeam = async (teamData: { name: string; description: string | null }) => {
+        try {
+            await createTeam(teamData);
+            addToast({ message: 'Tạo nhóm thành công!', type: 'success' });
+            fetchTeams();
+        } catch (err) {
+            addToast({ message: 'Tạo nhóm thất bại.', type: 'error' });
+            throw err;
+        }
+    };
+
+    const handleNavigateToDetails = (teamId: number) => {
+        console.log(`Điều hướng đến trang chi tiết của nhóm ID: ${teamId}`);
+    };
+
+    const handleDeleteTeam = (teamId: number, teamName: string) => {
+        setConfirmModalContent({
+            title: 'Xác nhận xóa nhóm',
+            message: `Bạn có chắc chắn muốn xóa nhóm "${teamName}" không? Mọi dữ liệu liên quan sẽ bị mất vĩnh viễn.`,
+            confirmText: 'Xóa nhóm'
+        });
+
+        setConfirmAction(() => async () => {
+             try {
+                await deleteTeam(teamId);
+                addToast({ message: 'Xóa nhóm thành công!', type: 'success' });
+                setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));
+            } catch (err) {
+                addToast({ message: 'Xóa nhóm thất bại.', type: 'error' });
+            }
+        });
+        
+        setIsConfirmModalOpen(true);
+    };
+
+    const handleLeaveTeam = (teamId: number) => {
+        setConfirmModalContent({
+            title: 'Xác nhận rời nhóm',
+            message: 'Bạn có chắc chắn muốn rời khỏi nhóm này?',
+            confirmText: 'Rời nhóm'
+        });
+        
+        setConfirmAction(() => async () => {
+             try {
+                if (currentUserId) {
+                    await leaveTeam(teamId, currentUserId);
+                    addToast({ message: 'Rời nhóm thành công!', type: 'success' });
+                    setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));
+                }
+            } catch (err) {
+                addToast({ message: 'Rời nhóm thất bại.', type: 'error' });
+            }
+        });
+
+       setIsConfirmModalOpen(true);
+    };
+    
+    const renderContent = () => {
+        if (loading) return (
+            <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
             </div>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 md:gap-x-10 gap-y-4">
-                {/* Cột trái */}
-                <div>
-                  <label className="block text-xl font-bold text-gray-800">Họ và tên</label>
-                  <input
-                    name="fullName"
-                    placeholder="Nhập vào đây"
-                    onChange={handleChange}
-                    value={form.fullName}
-                    required
-                    className="w-full px-4 py-3 mt-2 mb-4 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-700"
-                  />
+        );
+        if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
+        if (!user) return <div className="text-center py-10">Vui lòng đăng nhập để xem các nhóm.</div>;
+        if (teams.length === 0) return (
+            <div className="text-center py-20 bg-gray-50 rounded-lg">
+                <h3 className="text-xl font-semibold text-gray-700">Không tìm thấy nhóm nào</h3>
+                <p className="mt-2 text-gray-500">Bạn chưa tham gia nhóm nào. Hãy tạo một nhóm mới để bắt đầu!</p>
+            </div>
+        );
 
-                  <label className="block text-xl font-bold text-gray-800">Email</label>
-                  <input
-                    name="email"
-                    type="email"
-                    placeholder="Nhập vào đây"
-                    onChange={handleChange}
-                    value={form.email}
-                    required
-                    className="w-full px-4 py-3 mt-2 mb-4 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-700"
-                  />
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                {teams.map(team => {
+                    const currentUserMembership = team.teamMembers.find(m => m.userId === currentUserId);
+                    const currentUserRole = currentUserMembership?.roleInTeam || 'Member';
 
-                  <label className="block text-xl font-bold text-gray-800">Số điện thoại</label>
-                  <input
-                    name="phoneNumber"
-                    placeholder="Nhập vào đây"
-                    onChange={handleChange}
-                    value={form.phoneNumber}
-                    required
-                    className="w-full px-4 py-3 mt-2 mb-4 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-700"
-                  />
-
-                  <div className="mt-8 text-center">
-                    <span className="text-gray-700">Đã có tài khoản?{' '}</span>
-                    <Link to="/login" className="italic font-medium text-[#AB7C56] underline hover:text-amber-800">
-                      Đăng nhập
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Cột phải */}
-                <div>
-                  <label className="block text-xl font-bold text-gray-800">Tên đăng nhập</label>
-                  <input
-                    name="username"
-                    placeholder="Nhập vào đây"
-                    onChange={handleChange}
-                    value={form.username}
-                    required
-                    className="w-full px-4 py-3 mt-2 mb-4 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-700"
-                  />
-
-                  <label className="block text-xl font-bold text-gray-800">Mật khẩu</label>
-                  <div className="relative">
-                    <input
-                      name="password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Nhập vào đây"
-                      onChange={handleChange}
-                      value={form.password}
-                      required
-                      className="w-full px-4 py-3 pr-10 mt-2 mb-4 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-700"
-                    />
-                    <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute text-gray-400 right-4 top-1/2 -translate-y-1/2 transform hover:text-gray-600"
-                    >
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
-
-                  <label className="block text-xl font-bold text-gray-800">Giới tính</label>
-                  <div className="flex items-center mt-4 mb-6 space-x-6">
-                    {['Nam', 'Nữ', 'Khác'].map((option) => (
-                      <label key={option} className="flex items-center space-x-2 text-base text-gray-800 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="gender"
-                          value={option}
-                          checked={form.gender === option}
-                          onChange={handleChange}
-                          className="w-5 h-5 cursor-pointer text-amber-700 focus:ring-amber-700"
+                    return (
+                        <TeamCard
+                            key={team.id}
+                            team={team}
+                            currentUserRole={currentUserRole}
+                            onNavigateToDetails={handleNavigateToDetails}
+                            onDeleteTeam={() => handleDeleteTeam(team.id, team.name)}
+                            onLeaveTeam={() => handleLeaveTeam(team.id)}
+                            onOpenGrantLeaderModal={handleOpenGrantLeaderModal}
+                            onOpenInviteModal={handleOpenInviteModal}
                         />
-                        <span>{option}</span>
-                      </label>
-                    ))}
-                  </div>
+                    );
+                })}
+            </div>
+        );
+    };
 
-                  {error && (
-                    <p className="text-sm text-center text-red-600 mb-4">{error}</p>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-3 mt-8 font-bold text-white bg-[#B77B4F] rounded-full hover:bg-[#a56c3b] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#B77B4F] transition-colors disabled:bg-gray-400"
-                  >
-                    {isSubmitting ? 'Đang xử lý...' : 'ĐĂNG KÝ'}
-                  </button>
+    return (
+        <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+            <Sidebar activeItem="Quản lý nhóm" />
+            <main className="flex-grow p-6 sm:p-8 md:ml-64">
+                <div className="max-w-7xl mx-auto">
+                    <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                         <div>
+                            <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100">Nhóm Của Tôi</h1>
+                            <p className="mt-1 text-gray-500 dark:text-gray-400">Tất cả các nhóm bạn đang tham gia.</p>
+                        </div>
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="mt-4 md:mt-0 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-transform hover:scale-105"
+                        >
+                            + Tạo Nhóm Mới
+                        </button>
+                    </header>
+                    {renderContent()}
                 </div>
-              </div>
-            </form>
-          )}
+            </main>
+
+            <CreateTeamModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSubmit={handleCreateTeam}
+            />
+
+            {selectedTeamForModal && currentUserId && (
+                <>
+                    <SelectMemberModal
+                        isOpen={isGrantLeaderModalOpen}
+                        onClose={handleCloseGrantLeaderModal}
+                        members={selectedTeamForModal.teamMembers}
+                        onSelectMember={handleGrantLeaderSelect}
+                        teamName={selectedTeamForModal.name}
+                        currentUserId={currentUserId}
+                    />
+                    <InviteMemberModal
+                        isOpen={isInviteModalOpen}
+                        onClose={handleCloseInviteModal}
+                        onInvite={handleInviteMember}
+                        teamId={selectedTeamForModal.id}
+                        teamName={selectedTeamForModal.name}
+                    />
+                </>
+            )}
+            
+            <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => setIsConfirmModalOpen(false)}
+                onConfirm={() => {
+                    confirmAction?.();
+                    setIsConfirmModalOpen(false);
+                }}
+                title={confirmModalContent.title}
+                message={confirmModalContent.message}
+                confirmText={confirmModalContent.confirmText}
+                confirmButtonVariant="danger"
+            />
         </div>
-      </div>
-    </div>
-  );
-}
+    );
+};
+
+export default TeamPage;

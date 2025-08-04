@@ -7,6 +7,7 @@ import {
 } from '../services/invitationService';
 import Sidebar from '../components/Sidebar';
 import { Mail, Check, X, Loader2, Bell } from 'lucide-react';
+import { useToast } from '../hooks/useToast';
 
 // --- Component Card cho mỗi lời mời ---
 interface InvitationCardProps {
@@ -16,6 +17,7 @@ interface InvitationCardProps {
 
 const InvitationCard: React.FC<InvitationCardProps> = ({ invitation, onAction }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { addToast } = useToast();
 
   const invitationTypeText = invitation.invitationType === 'Project' ? 'dự án' : 'nhóm';
 
@@ -24,14 +26,14 @@ const InvitationCard: React.FC<InvitationCardProps> = ({ invitation, onAction })
     try {
       if (action === 'accept') {
         await acceptInvitation(invitation);
-        alert('Đã chấp nhận lời mời!');
+        addToast({ message: 'Đã chấp nhận lời mời!', type: 'success' });
       } else {
         await rejectInvitation(invitation);
-        alert('Đã từ chối lời mời.');
+        addToast({ message: 'Đã từ chối lời mời.', type: 'success' });
       }
       onAction(); // Gọi lại hàm để tải lại danh sách
     } catch (error) {
-      alert(`Đã có lỗi xảy ra: ${error}`);
+      addToast({ message: `Đã có lỗi xảy ra: ${error}`, type: 'error' });
       setIsLoading(false);
     }
     // Component sẽ tự unmount sau khi onAction() chạy, không cần setLoading(false)

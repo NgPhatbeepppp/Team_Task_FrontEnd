@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Team } from '../types';
+import { useToast } from '../hooks/useToast';
 
 interface CreateTeamModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({ isOpen, onClos
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { addToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +29,7 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({ isOpen, onClos
       setDescription('');
       onClose();
     } catch (error) {
-      alert('Tạo nhóm thất bại. Vui lòng thử lại.');
+      addToast({ message: 'Tạo nhóm thất bại. Vui lòng thử lại.', type: 'error' });
       console.error(error);
     } finally {
       setIsSubmitting(false);

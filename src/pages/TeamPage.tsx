@@ -5,6 +5,7 @@ import TeamCard from '../components/TeamCard';
 import { InviteMemberModal } from '../components/InviteMemberModal';
 import { SelectMemberModal } from '../components/SelectMemberModal';
 import { CreateTeamModal } from '../components/CreateTeamModal';
+import { ConfirmationModal } from '../components/ConfirmationModal'; // Import ConfirmationModal
 import {
   getMyTeams,
   createTeam,
@@ -16,18 +17,27 @@ import {
 } from '../services/teamService';
 import { useAuth } from '../hooks/useAuth';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '../hooks/useToast';
 
 const TeamPage = () => {
     const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
+    // States for modals
     const [isGrantLeaderModalOpen, setIsGrantLeaderModalOpen] = useState(false);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedTeamForModal, setSelectedTeamForModal] = useState<Team | null>(null);
 
+    // States for confirmation modal
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [confirmModalContent, setConfirmModalContent] = useState({ title: '', message: '', confirmText: 'Xác nhận' });
+    const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
+
+
     const { user } = useAuth();
+    const { addToast } = useToast();
     const currentUserId = user?.id;
 
     const fetchTeams = async () => {
@@ -69,38 +79,52 @@ const TeamPage = () => {
         setIsInviteModalOpen(false);
         setSelectedTeamForModal(null);
     };
+    
+    // --- CẬP NHẬT LOGIC XÁC NHẬN ---
+    const handleGrantLeaderSelect = (targetUserId: number) => {
+        const team = selectedTeamForModal;
+        const member = team?.teamMembers.find(m => m.userId === targetUserId);
+        if (!team || !member) return;
 
-    const handleGrantLeader = async (targetUserId: number) => {
-        if (!selectedTeamForModal) return;
-        if (window.confirm(`Bạn có chắc muốn trao quyền trưởng nhóm cho thành viên này?`)) {
+        setConfirmModalContent({
+            title: 'Xác nhận trao quyền',
+            message: `Bạn có chắc muốn trao quyền trưởng nhóm cho "${member.user.username}"? Hành động này không thể hoàn tác.`,
+            confirmText: 'Trao quyền'
+        });
+        
+        setConfirmAction(() => async () => {
             try {
-                await grantLeaderRole(selectedTeamForModal.id, targetUserId);
-                alert('Trao quyền thành công!');
-                fetchTeams();
+                await grantLeaderRole(team.id, targetUserId);
+                addToast({ message: 'Trao quyền thành công!', type: 'success' });
+                fetchTeams(); // Tải lại danh sách nhóm để cập nhật vai trò
             } catch (err) {
-                alert('Trao quyền thất bại.');
+                addToast({ message: 'Trao quyền thất bại.', type: 'error' });
             } finally {
                 handleCloseGrantLeaderModal();
             }
-        }
+        });
+
+        setIsGrantLeaderModalOpen(false); // Đóng modal chọn người
+        setIsConfirmModalOpen(true); // Mở modal xác nhận
     };
 
     const handleInviteMember = async (targetUserId: number) => {
         if (!selectedTeamForModal) return;
         try {
             await inviteUserToTeam(selectedTeamForModal.id, targetUserId);
-            alert('Đã gửi lời mời thành công!');
+            addToast({ message: 'Đã gửi lời mời thành công!', type: 'success' });
         } catch (err) {
-            alert('Gửi lời mời thất bại. Người dùng có thể đã ở trong nhóm hoặc đã có lời mời đang chờ.');
+            addToast({ message: 'Gửi lời mời thất bại. Người dùng có thể đã ở trong nhóm hoặc đã có lời mời đang chờ.', type: 'error' });
         }
     };
     
     const handleCreateTeam = async (teamData: { name: string; description: string | null }) => {
         try {
             await createTeam(teamData);
+            addToast({ message: 'Tạo nhóm thành công!', type: 'success' });
             fetchTeams();
         } catch (err) {
-            alert('Tạo nhóm thất bại.');
+            addToast({ message: 'Tạo nhóm thất bại.', type: 'error' });
             throw err;
         }
     };
@@ -109,28 +133,46 @@ const TeamPage = () => {
         console.log(`Điều hướng đến trang chi tiết của nhóm ID: ${teamId}`);
     };
 
-    const handleDeleteTeam = async (teamId: number) => {
-        if (window.confirm('Bạn có chắc chắn muốn xóa nhóm này không?')) {
-            try {
+    const handleDeleteTeam = (teamId: number, teamName: string) => {
+        setConfirmModalContent({
+            title: 'Xác nhận xóa nhóm',
+            message: `Bạn có chắc chắn muốn xóa nhóm "${teamName}" không? Mọi dữ liệu liên quan sẽ bị mất vĩnh viễn.`,
+            confirmText: 'Xóa nhóm'
+        });
+
+        setConfirmAction(() => async () => {
+             try {
                 await deleteTeam(teamId);
+                addToast({ message: 'Xóa nhóm thành công!', type: 'success' });
                 setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));
             } catch (err) {
-                alert('Xóa nhóm thất bại.');
+                addToast({ message: 'Xóa nhóm thất bại.', type: 'error' });
             }
-        }
+        });
+        
+        setIsConfirmModalOpen(true);
     };
 
-    const handleLeaveTeam = async (teamId: number) => {
-        if (window.confirm('Bạn có chắc chắn muốn rời khỏi nhóm này?')) {
-            try {
+    const handleLeaveTeam = (teamId: number) => {
+        setConfirmModalContent({
+            title: 'Xác nhận rời nhóm',
+            message: 'Bạn có chắc chắn muốn rời khỏi nhóm này?',
+            confirmText: 'Rời nhóm'
+        });
+        
+        setConfirmAction(() => async () => {
+             try {
                 if (currentUserId) {
                     await leaveTeam(teamId, currentUserId);
+                    addToast({ message: 'Rời nhóm thành công!', type: 'success' });
                     setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));
                 }
             } catch (err) {
-                alert('Rời nhóm thất bại.');
+                addToast({ message: 'Rời nhóm thất bại.', type: 'error' });
             }
-        }
+        });
+
+       setIsConfirmModalOpen(true);
     };
     
     const renderContent = () => {
@@ -149,7 +191,6 @@ const TeamPage = () => {
         );
 
         return (
-            // --- THAY ĐỔI BỐ CỤC LƯỚI ---
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {teams.map(team => {
                     const currentUserMembership = team.teamMembers.find(m => m.userId === currentUserId);
@@ -161,8 +202,8 @@ const TeamPage = () => {
                             team={team}
                             currentUserRole={currentUserRole}
                             onNavigateToDetails={handleNavigateToDetails}
-                            onDeleteTeam={handleDeleteTeam}
-                            onLeaveTeam={handleLeaveTeam}
+                            onDeleteTeam={() => handleDeleteTeam(team.id, team.name)}
+                            onLeaveTeam={() => handleLeaveTeam(team.id)}
                             onOpenGrantLeaderModal={handleOpenGrantLeaderModal}
                             onOpenInviteModal={handleOpenInviteModal}
                         />
@@ -205,7 +246,7 @@ const TeamPage = () => {
                         isOpen={isGrantLeaderModalOpen}
                         onClose={handleCloseGrantLeaderModal}
                         members={selectedTeamForModal.teamMembers}
-                        onSelectMember={handleGrantLeader}
+                        onSelectMember={handleGrantLeaderSelect}
                         teamName={selectedTeamForModal.name}
                         currentUserId={currentUserId}
                     />
@@ -218,6 +259,19 @@ const TeamPage = () => {
                     />
                 </>
             )}
+            
+            <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => setIsConfirmModalOpen(false)}
+                onConfirm={() => {
+                    confirmAction?.();
+                    setIsConfirmModalOpen(false);
+                }}
+                title={confirmModalContent.title}
+                message={confirmModalContent.message}
+                confirmText={confirmModalContent.confirmText}
+                confirmButtonVariant="danger"
+            />
         </div>
     );
 };

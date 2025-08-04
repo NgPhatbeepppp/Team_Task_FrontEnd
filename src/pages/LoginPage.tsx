@@ -4,10 +4,12 @@ import { login as loginService } from '../services/authService';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Eye, EyeOff, User } from 'lucide-react'; // Thêm icons cho đẹp hơn
+import { useToast } from '../hooks/useToast';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { addToast } = useToast();
 
   const [form, setForm] = useState({ username: '', password: '' });
   const [remember, setRemember] = useState(false);
@@ -29,7 +31,7 @@ export default function LoginPage() {
       navigate('/profile');
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Đã có lỗi xảy ra.';
-      alert('Đăng nhập thất bại: ' + errorMessage);
+      addToast({ message: `Đăng nhập thất bại: ${errorMessage}`, type: 'error' });
     }
   };
 

@@ -8,6 +8,7 @@ import { getMyProjects, createProject } from '../services/projectService';
 import { Project } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '../hooks/useToast';
 
 const ProjectsPage = () => {
     const [projects, setProjects] = useState<Project[]>([]);
@@ -18,6 +19,7 @@ const ProjectsPage = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const { user } = useAuth();
+    const { addToast } = useToast();
 
     const fetchProjects = async () => {
         try {
@@ -53,8 +55,9 @@ const ProjectsPage = () => {
         try {
             await createProject(projectData);
             fetchProjects();
+            addToast({ message: 'Tạo dự án thành công!', type: 'success' });
         } catch (err) {
-            alert('Tạo dự án thất bại.');
+            addToast({ message: 'Tạo dự án thất bại.', type: 'error' });
             throw err;
         }
     };

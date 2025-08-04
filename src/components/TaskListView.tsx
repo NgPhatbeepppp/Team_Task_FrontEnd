@@ -7,6 +7,7 @@ import { PriorityPicker } from './PriorityPicker';
 // ✨ THAY ĐỔI: Import hàm updateTaskPriority mới
 import { updateTaskPriority } from '../services/taskService';
 import { List } from 'lucide-react';
+import { useToast } from '../hooks/useToast';
 
 // Component con để hiển thị avatar người được giao
 const AssigneeAvatar: React.FC<{ user: User }> = ({ user }) => {
@@ -30,14 +31,16 @@ interface TaskListViewProps {
 
 export const TaskListView: React.FC<TaskListViewProps> = ({ tasks, statuses, onTaskUpdate, onTaskSelect }) => {
     const statusMap = new Map(statuses.map(s => [s.id, s]));
+    const { addToast } = useToast();
 
     const handleUpdatePriority = async (taskId: number, priority: 'Low' | 'Medium' | 'High') => {
         try {
             // ✨ THAY ĐỔI: Gọi hàm updateTaskPriority chuyên dụng
             await updateTaskPriority(taskId, priority);
+            addToast({ message: 'Cập nhật độ ưu tiên thành công!', type: 'success' });
             onTaskUpdate();
         } catch (error) {
-            alert('Cập nhật độ ưu tiên thất bại.');
+            addToast({ message: 'Cập nhật độ ưu tiên thất bại.', type: 'error' });
         }
     };
 

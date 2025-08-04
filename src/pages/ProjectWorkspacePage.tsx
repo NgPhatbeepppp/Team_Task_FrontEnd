@@ -16,6 +16,7 @@ import { TaskListView } from '../components/TaskListView';
 import { KanbanBoardView } from '../components/KanbanBoardView';
 import { TaskDetailsModal } from '../components/TaskDetailsModal';
 import { CalendarView } from '../components/CalendarView'; // Thêm import
+import { useToast } from '../hooks/useToast';
 
 const ProjectWorkspacePage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -30,6 +31,7 @@ const ProjectWorkspacePage = () => {
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
 
   const [activeView, setActiveView] = useState<'list' | 'board' | 'calendar'>('list');
+  const { addToast } = useToast();
 
   const fetchProjectData = useCallback(async () => {
     if (!projectId) {
@@ -84,7 +86,7 @@ const ProjectWorkspacePage = () => {
         setSelectedTask(fullTask);
         setIsDetailsModalOpen(true);
     } catch (error) {
-        alert("Không thể tải chi tiết công việc.");
+        addToast({ message: "Không thể tải chi tiết công việc.", type: 'error' });
     }
   }
 
@@ -93,7 +95,7 @@ const ProjectWorkspacePage = () => {
           await updateTask(taskId, taskData);
           await fetchProjectData(); 
       } catch (error) {
-          alert('Cập nhật thất bại');
+          addToast({ message: 'Cập nhật thất bại', type: 'error' });
           throw error;
       }
   }

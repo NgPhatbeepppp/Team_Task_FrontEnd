@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { TaskItem, User } from '../types';
 import { ProjectStatus } from '../services/projectStatusService';
 import { UserSearchInput } from './UserSearchInput';
+import { useToast } from '../hooks/useToast';
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
   const [deadline, setDeadline] = useState('');
   const [statusId, setStatusId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { addToast } = useToast();
 
   useEffect(() => {
     if (isOpen && statuses.length > 0 && !statusId) {
@@ -65,7 +67,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
       resetForm();
       onClose();
     } catch (error) {
-      alert('Tạo công việc thất bại. Vui lòng thử lại.');
+      addToast({ message: 'Tạo công việc thất bại. Vui lòng thử lại.', type: 'error' });
       console.error(error);
     } finally {
       setIsSubmitting(false);

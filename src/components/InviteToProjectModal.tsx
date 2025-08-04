@@ -9,6 +9,7 @@ import { getTeamByKeyCode, Team } from '../services/teamService'; // THÊM MỚI
 import { debounce } from 'lodash';
 import { User, Users, Search, Loader2, Key, XCircle, CheckCircle } from 'lucide-react'; // THÊM MỚI
 import { Project } from '../types';
+import { useToast } from '../hooks/useToast';
 
 // --- COMPONENT CON CHO TAB TÌM KIẾM ---
 const SearchTab: React.FC<{ project: Project }> = ({ project }) => {
@@ -16,6 +17,7 @@ const SearchTab: React.FC<{ project: Project }> = ({ project }) => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
+  const { addToast } = useToast();
 
   const debouncedSearch = useCallback(
     debounce(async (query: string) => {
@@ -54,9 +56,9 @@ const SearchTab: React.FC<{ project: Project }> = ({ project }) => {
       }
       setInvitedIds(prev => new Set(prev).add(id));
       const displayName = item.type === 'User' ? item.data.username : item.data.name;
-      alert(`Đã gửi lời mời tới "${displayName}" thành công!`);
+      addToast({ message: `Đã gửi lời mời tới "${displayName}" thành công!`, type: 'success' });
     } catch (err) {
-      alert(`Gửi lời mời thất bại. Có thể họ đã ở trong dự án hoặc đã nhận được lời mời.`);
+      addToast({ message: `Gửi lời mời thất bại. Có thể họ đã ở trong dự án hoặc đã nhận được lời mời.`, type: 'error' });
     }
   };
 
@@ -114,6 +116,7 @@ const KeyCodeTab: React.FC<{ project: Project }> = ({ project }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isInvited, setIsInvited] = useState(false);
+  const { addToast } = useToast();
 
   const debouncedSearch = useCallback(
     debounce(async (code: string) => {
@@ -147,9 +150,9 @@ const KeyCodeTab: React.FC<{ project: Project }> = ({ project }) => {
     try {
       await inviteTeamToProject(project.id, foundTeam.keyCode);
       setIsInvited(true);
-      alert(`Đã gửi lời mời tới nhóm "${foundTeam.name}" thành công!`);
+      addToast({ message: `Đã gửi lời mời tới nhóm "${foundTeam.name}" thành công!`, type: 'success' });
     } catch(err) {
-      alert(`Gửi lời mời thất bại. Có thể nhóm đã ở trong dự án hoặc đã nhận được lời mời.`);
+      addToast({ message: `Gửi lời mời thất bại. Có thể nhóm đã ở trong dự án hoặc đã nhận được lời mời.`, type: 'error' });
     }
   };
 

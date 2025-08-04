@@ -4,6 +4,7 @@ import { Project } from '../types';
 import { removeUserFromProject, removeTeamFromProject } from '../services/projectService';
 import { UserX, Users, User, Trash2, UserPlus } from 'lucide-react'; // ✅ THÊM MỚI: import icon UserPlus
 import { InviteToProjectModal } from './InviteToProjectModal'; // ✅ THÊM MỚI: import Modal
+import { useToast } from '../hooks/useToast';
 
 interface MemberManagementProps {
   project: Project;
@@ -13,16 +14,17 @@ interface MemberManagementProps {
 export const MemberManagement: React.FC<MemberManagementProps> = ({ project, onMemberRemoved }) => {
   
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const { addToast } = useToast();
 
   const handleRemoveUser = async (userId: number, username: string) => {
     if (window.confirm(`Bạn có chắc chắn muốn xóa thành viên "${username}" khỏi dự án này không?`)) {
       try {
         await removeUserFromProject(project.id, userId);
-        alert(`Đã xóa ${username} thành công.`);
+        addToast({ message: `Đã xóa ${username} thành công.`, type: 'success' });
         onMemberRemoved();
       } catch (error: any) {
         const errorMessage = error.response?.data?.message || 'Xóa thành viên thất bại.';
-        alert(errorMessage);
+        addToast({ message: errorMessage, type: 'error' });
       }
     }
   };
@@ -31,11 +33,11 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({ project, onM
     if (window.confirm(`Bạn có chắc chắn muốn xóa nhóm "${teamName}" khỏi dự án này không?`)) {
       try {
         await removeTeamFromProject(project.id, teamId);
-        alert(`Đã xóa nhóm "${teamName}" thành công.`);
+        addToast({ message: `Đã xóa nhóm "${teamName}" thành công.`, type: 'success' });
         onMemberRemoved();
       } catch (error: any) {
         const errorMessage = error.response?.data?.message || 'Xóa nhóm thất bại.';
-        alert(errorMessage);
+        addToast({ message: errorMessage, type: 'error' });
       }
     }
   };

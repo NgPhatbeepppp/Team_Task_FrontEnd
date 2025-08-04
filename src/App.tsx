@@ -15,6 +15,7 @@ import HomePage from './pages/HomePage';
 import MyCalendarPage from './pages/MyCalendarPage'; 
 import AdvancedSettingsPage from './pages/AdvancedSettingsPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import { ToastProvider } from './contexts/ToastContext';
 
 // Component trung gian để xử lý logic Route được bảo vệ
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -73,7 +74,9 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <ToastProvider>
+          <AppRoutes />
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   );

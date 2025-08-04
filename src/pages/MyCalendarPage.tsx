@@ -14,6 +14,7 @@ import '../components/CalendarView.css'; // Tái sử dụng CSS đã có
 import { TaskDetailsModal } from '../components/TaskDetailsModal';
 import { getProjectStatuses } from '../services/projectStatusService';
 import { ProjectStatus } from '../services/projectStatusService';
+import { useToast } from '../hooks/useToast';
 
 // Định nghĩa kiểu cho sự kiện trên lịch
 interface CalendarEvent extends Event {
@@ -43,6 +44,7 @@ const MyCalendarPage = () => {
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
     const [selectedTaskStatuses, setSelectedTaskStatuses] = useState<ProjectStatus[]>([]);
+    const { addToast } = useToast();
 
     // Hàm tải danh sách nhiệm vụ
     const fetchTasks = async () => {
@@ -75,7 +77,7 @@ const MyCalendarPage = () => {
             setSelectedTaskStatuses(statuses);
             setIsDetailsModalOpen(true);
         } catch (error) {
-            alert("Không thể tải chi tiết công việc.");
+            addToast({ message: 'Không thể tải chi tiết công việc.', type: 'error' });
         }
     };
 
@@ -84,8 +86,9 @@ const MyCalendarPage = () => {
         try {
             await updateTask(taskId, taskData);
             await fetchTasks(); // Tải lại toàn bộ nhiệm vụ để cập nhật lịch
+            addToast({ message: 'Cập nhật công việc thành công!', type: 'success' });
         } catch (error) {
-            alert('Cập nhật thất bại');
+            addToast({ message: 'Cập nhật thất bại.', type: 'error' });
             throw error;
         }
     };
