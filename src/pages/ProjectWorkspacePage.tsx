@@ -12,7 +12,6 @@ import { ProjectHeader } from '../components/ProjectHeader';
 import { ViewSwitcher } from '../components/ViewSwitcher';
 import { TaskListView } from '../components/TaskListView';
 
-
 const ProjectWorkspacePage = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [project, setProject] = useState<Project | null>(null); // ✨ LƯU CẢ DỰ ÁN
@@ -21,7 +20,6 @@ const ProjectWorkspacePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeView, setActiveView] = useState<'list' | 'board' | 'calendar'>('list');
-
 
   const fetchProjectData = useCallback(async () => {
     if (!projectId) {
@@ -91,9 +89,9 @@ const ProjectWorkspacePage = () => {
   };
   
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100">
       <Sidebar activeItem="Quản lý dự án" />
-      <main className="flex-grow p-6 sm:p-8">
+      <main className="p-6 sm:p-8 ml-[260px]"> {/* ✨ FIX TRÁNH CHE BỞI SIDEBAR */}
         <div className="max-w-7xl mx-auto">
           {/* ✨ SỬ DỤNG CÁC COMPONENT MỚI */}
           <ProjectHeader 
@@ -107,7 +105,7 @@ const ProjectWorkspacePage = () => {
           {renderContent()}
         </div>
       </main>
-      
+
       <CreateTaskModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
