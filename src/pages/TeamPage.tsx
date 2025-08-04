@@ -1,9 +1,10 @@
+// src/pages/TeamPage.tsx
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import TeamCard from '../components/TeamCard';
 import { InviteMemberModal } from '../components/InviteMemberModal';
 import { SelectMemberModal } from '../components/SelectMemberModal';
-import { CreateTeamModal } from '../components/CreateTeamModal'; // ✨ 1. IMPORT MODAL TẠO NHÓM
+import { CreateTeamModal } from '../components/CreateTeamModal';
 import {
   getMyTeams,
   createTeam,
@@ -14,22 +15,21 @@ import {
   Team,
 } from '../services/teamService';
 import { useAuth } from '../hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 
 const TeamPage = () => {
-    // --- STATES ---
     const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
     const [isGrantLeaderModalOpen, setIsGrantLeaderModalOpen] = useState(false);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // ✨ 2. THÊM STATE CHO MODAL TẠO NHÓM
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedTeamForModal, setSelectedTeamForModal] = useState<Team | null>(null);
 
     const { user } = useAuth();
     const currentUserId = user?.id;
 
-    // --- DATA FETCHING ---
     const fetchTeams = async () => {
         try {
             setLoading(true);
@@ -52,7 +52,6 @@ const TeamPage = () => {
         }
     }, [currentUserId]);
 
-    // --- MODAL HANDLERS ---
     const handleOpenGrantLeaderModal = (team: Team) => {
         setSelectedTeamForModal(team);
         setIsGrantLeaderModalOpen(true);
@@ -70,8 +69,6 @@ const TeamPage = () => {
         setIsInviteModalOpen(false);
         setSelectedTeamForModal(null);
     };
-
-    // --- ACTION HANDLERS ---
 
     const handleGrantLeader = async (targetUserId: number) => {
         if (!selectedTeamForModal) return;
@@ -98,14 +95,13 @@ const TeamPage = () => {
         }
     };
     
-    // ✨ 3. CẬP NHẬT HÀM ĐỂ NHẬN DỮ LIỆU TỪ MODAL
     const handleCreateTeam = async (teamData: { name: string; description: string | null }) => {
         try {
             await createTeam(teamData);
             fetchTeams();
         } catch (err) {
             alert('Tạo nhóm thất bại.');
-            throw err; // Ném lỗi để modal không tự đóng
+            throw err;
         }
     };
 
@@ -137,15 +133,24 @@ const TeamPage = () => {
         }
     };
     
-    // --- RENDER LOGIC ---
     const renderContent = () => {
-        if (loading) return <div className="text-center py-10">Đang tải dữ liệu...</div>;
+        if (loading) return (
+            <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+            </div>
+        );
         if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
         if (!user) return <div className="text-center py-10">Vui lòng đăng nhập để xem các nhóm.</div>;
-        if (teams.length === 0) return <div className="text-center py-10">Bạn chưa tham gia nhóm nào. Hãy tạo một nhóm mới!</div>;
+        if (teams.length === 0) return (
+            <div className="text-center py-20 bg-gray-50 rounded-lg">
+                <h3 className="text-xl font-semibold text-gray-700">Không tìm thấy nhóm nào</h3>
+                <p className="mt-2 text-gray-500">Bạn chưa tham gia nhóm nào. Hãy tạo một nhóm mới để bắt đầu!</p>
+            </div>
+        );
 
         return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            // --- THAY ĐỔI BỐ CỤC LƯỚI ---
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {teams.map(team => {
                     const currentUserMembership = team.teamMembers.find(m => m.userId === currentUserId);
                     const currentUserRole = currentUserMembership?.roleInTeam || 'Member';
@@ -168,16 +173,18 @@ const TeamPage = () => {
     };
 
     return (
-        <div className="flex min-h-screen bg-gray-100">
+        <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
             <Sidebar activeItem="Quản lý nhóm" />
             <main className="flex-grow p-6 sm:p-8 md:ml-64">
                 <div className="max-w-7xl mx-auto">
-                    <header className="flex justify-between items-center mb-8">
-                        <h1 className="text-3xl font-bold text-gray-800">Nhóm Của Tôi</h1>
+                    <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                         <div>
+                            <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100">Nhóm Của Tôi</h1>
+                            <p className="mt-1 text-gray-500 dark:text-gray-400">Tất cả các nhóm bạn đang tham gia.</p>
+                        </div>
                         <button
-                            // ✨ 4. THAY ĐỔI onClick ĐỂ MỞ MODAL
                             onClick={() => setIsCreateModalOpen(true)}
-                            className="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition"
+                            className="mt-4 md:mt-0 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-transform hover:scale-105"
                         >
                             + Tạo Nhóm Mới
                         </button>
@@ -186,7 +193,6 @@ const TeamPage = () => {
                 </div>
             </main>
 
-            {/* ✨ 5. RENDER CÁC MODAL */}
             <CreateTeamModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}

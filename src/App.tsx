@@ -13,6 +13,8 @@ import ProjectSettingsPage from './pages/ProjectSettingsPage';
 import MyTasksPage from './pages/MyTasksPage';
 import HomePage from './pages/HomePage'; 
 import MyCalendarPage from './pages/MyCalendarPage'; 
+import AdvancedSettingsPage from './pages/AdvancedSettingsPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 // Component trung gian để xử lý logic Route được bảo vệ
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -55,8 +57,9 @@ function AppRoutes() {
       <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
       <Route path="/project/:projectId" element={<ProtectedRoute><ProjectWorkspacePage /></ProtectedRoute>} />
       <Route path="/project/:projectId/settings" element={<ProtectedRoute><ProjectSettingsPage /></ProtectedRoute>} />
-
-       <Route path="/calendar" element={<ProtectedRoute><MyCalendarPage /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><AdvancedSettingsPage /></ProtectedRoute>} />
+      <Route path="/calendar" element={<ProtectedRoute><MyCalendarPage /></ProtectedRoute>} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route 
         path="*" 
         element={<Navigate to={isAuthenticated ? "/" : "/login"} />} 

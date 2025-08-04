@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { login as loginService } from '../services/authService';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { Eye, EyeOff, User } from 'lucide-react'; // Thêm icons cho đẹp hơn
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth(); 
+  const { login } = useAuth();
 
   const [form, setForm] = useState({ username: '', password: '' });
   const [remember, setRemember] = useState(false);
@@ -24,8 +25,8 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       const token = await loginService(form);
-      login(token);       
-      navigate('/profile'); 
+      login(token);
+      navigate('/profile');
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || err.message || 'Đã có lỗi xảy ra.';
       alert('Đăng nhập thất bại: ' + errorMessage);
@@ -33,130 +34,79 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{
-      backgroundImage: 'url(https://images.pexels.com/photos/998646/pexels-photo-998646.jpeg)',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      backgroundSize: 'cover',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      height: '100%',
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      fontFamily: 'Arial, sans-serif',
-    }}>
-      <form onSubmit={handleSubmit} style={{
-        background: 'rgba(255,255,255,0.6)',
-        padding: '30px',
-        borderRadius: '18px',
-        width: '340px',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-        backdropFilter: 'blur(4px)'
-      }}>
-        <h2 style={{ textAlign: 'center', fontSize: '50px', marginBottom: '20px' }}>Đăng Nhập</h2>
+    <div
+      className="fixed inset-0 flex items-center justify-center font-sans bg-cover bg-center"
+      style={{ backgroundImage: 'url(https://images.pexels.com/photos/998646/pexels-photo-998646.jpeg)' }}
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-sm p-8 space-y-6 bg-white/60 rounded-2xl shadow-lg backdrop-blur-sm"
+      >
+        <h2 className="text-4xl font-bold text-center text-gray-800">Đăng Nhập</h2>
 
         {/* Username */}
-        <div style={{ position: 'relative', marginBottom: '20px' }}>
+        <div className="relative">
           <input
             type="text"
             name="username"
-            placeholder="Username"
+            placeholder="Tên đăng nhập"
             onChange={handleChange}
             value={form.username}
             required
-            style={{
-              width: '100%',
-              padding: '12px 40px 12px 16px',
-              borderRadius: '999px',
-              border: '1px solid #ccc',
-              fontSize: '1em',
-              boxSizing: 'border-box'
-            }}
+            className="w-full px-4 py-3 pl-10 text-gray-700 bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
-          <span style={{
-            position: 'absolute',
-            right: '12px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            fontSize: '1.2em',
-            pointerEvents: 'none'
-          }}>
-            👤
-          </span>
+          <User className="absolute w-5 h-5 text-gray-400 left-4 top-1/2 -translate-y-1/2" />
         </div>
 
         {/* Password */}
-        <div style={{ position: 'relative', marginBottom: '20px' }}>
+        <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
             name="password"
-            placeholder="Password"
+            placeholder="Mật khẩu"
             onChange={handleChange}
             value={form.password}
             required
-            style={{
-              width: '100%',
-              padding: '12px 40px 12px 16px',
-              borderRadius: '999px',
-              border: '1px solid #ccc',
-              fontSize: '1em',
-              boxSizing: 'border-box'
-            }}
+            className="w-full px-4 py-3 pr-10 text-gray-700 bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
-          <span
+          <button
+            type="button"
             onClick={() => setShowPassword(!showPassword)}
-            style={{
-              position: 'absolute',
-              right: '12px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              fontSize: '1.2em',
-              cursor: 'pointer'
-            }}
+            className="absolute text-gray-400 right-4 top-1/2 -translate-y-1/2 hover:text-gray-600"
             title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
           >
-            {showPassword ? '🙈' : '👁️'}
-          </span>
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
         </div>
 
         {/* Checkbox + link */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.95em' }}>
+        <div className="flex items-center justify-between text-sm">
+          <label className="flex items-center text-gray-600">
             <input
               type="checkbox"
               checked={remember}
               onChange={handleRememberChange}
-              style={{ marginRight: '6px' }}
+              className="w-4 h-4 mr-2 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
             />
             Nhớ mật khẩu
           </label>
-          <a href="#" style={{ fontSize: '0.95em', color: '#333' }}>
-            Quên mật khẩu ?
-          </a>
+          <Link to="/reset-password" className="font-medium text-indigo-600 hover:underline">
+            Quên mật khẩu?
+          </Link>
         </div>
 
         {/* Login button */}
-        <button type="submit" style={{
-          width: '100%',
-          padding: '12px',
-          borderRadius: '999px',
-          backgroundColor: '#B77B4F',
-          color: 'white',
-          fontWeight: 'bold',
-          fontSize: '1em',
-          border: 'none',
-          cursor: 'pointer'
-        }}>
+        <button
+          type="submit"
+          className="w-full py-3 font-bold text-white bg-[#B77B4F] rounded-full hover:bg-[#a56c3b] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#B77B4F] transition-colors"
+        >
           Đăng nhập
         </button>
 
         {/* Register link */}
-        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.95em' }}>
+        <div className="text-sm text-center text-gray-600">
           Chưa có tài khoản?{' '}
-          <Link to="/register" style={{ fontWeight: 'bold', color: '#000', textDecoration: 'none' }}>
+          <Link to="/register" className="font-bold text-gray-800 hover:underline">
             Đăng ký
           </Link>
         </div>
