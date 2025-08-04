@@ -15,6 +15,7 @@ import { ViewSwitcher } from '../components/ViewSwitcher';
 import { TaskListView } from '../components/TaskListView';
 import { KanbanBoardView } from '../components/KanbanBoardView';
 import { TaskDetailsModal } from '../components/TaskDetailsModal';
+import { CalendarView } from '../components/CalendarView'; // Thêm import
 
 const ProjectWorkspacePage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -28,7 +29,6 @@ const ProjectWorkspacePage = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
 
-  // ✨ SỬA LỖI TẠI ĐÂY: Thêm 'calendar' vào kiểu dữ liệu của state
   const [activeView, setActiveView] = useState<'list' | 'board' | 'calendar'>('list');
 
   const fetchProjectData = useCallback(async () => {
@@ -59,7 +59,6 @@ const ProjectWorkspacePage = () => {
     fetchProjectData();
   }, [fetchProjectData]);
 
-    // Hàm chỉ fetch lại status, dùng khi thêm cột mới trên Kanban
     const fetchOnlyStatuses = useCallback(async () => {
         if (!projectId) return;
         try {
@@ -92,7 +91,7 @@ const ProjectWorkspacePage = () => {
   const handleUpdateTask = async (taskId: number, taskData: Partial<TaskItem> & { assignedUserIds?: number[] }) => {
       try {
           await updateTask(taskId, taskData);
-          await fetchProjectData(); // Tải lại toàn bộ dữ liệu
+          await fetchProjectData(); 
       } catch (error) {
           alert('Cập nhật thất bại');
           throw error;
@@ -124,7 +123,7 @@ const ProjectWorkspacePage = () => {
                   onStatusesChange={fetchOnlyStatuses}
                />;
       case 'calendar':
-        return <div className="text-center p-10">Chế độ xem Lịch sẽ được phát triển sau.</div>;
+        return <CalendarView tasks={tasks} onSelectTask={handleOpenTaskDetails} />; // Thay thế placeholder
       default:
         return <TaskListView tasks={tasks} statuses={statuses} onTaskUpdate={fetchProjectData}  onTaskSelect={handleOpenTaskDetails} />;
     }

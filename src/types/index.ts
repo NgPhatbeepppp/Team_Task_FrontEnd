@@ -46,6 +46,7 @@ export interface TaskItem {
     title: string;
     description: string | null;
     priority: 'Low' | 'Medium' | 'High';
+    startDate: string | null;
     deadline: string | null;
     createdAt: string;
     statusId: number | null;

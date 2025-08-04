@@ -18,6 +18,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [startDate, setStartDate] = useState(''); // THÊM STATE MỚI
   const [deadline, setDeadline] = useState('');
   const [statusId, setStatusId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,6 +34,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
     setDescription('');
     setPriority('Medium');
     setSelectedUsers([]);
+    setStartDate(''); // RESET STATE
     setDeadline('');
     if (statuses.length > 0) {
       setStatusId(statuses[0].id);
@@ -49,15 +51,15 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
     try {
       const assignedUserIds = selectedUsers.map(u => u.id);
       
-      // ✨ CẬP NHẬT THEO YÊU CẦU ✨
       await onSubmit({ 
         title, 
         description, 
         priority, 
         assignedUserIds,
         statusId,
+        startDate: startDate || null, // THÊM VÀO PAYLOAD
         deadline: deadline || null,
-        projectId: projectId // <-- ĐÃ THÊM DÒNG NÀY
+        projectId: projectId
       });
       
       resetForm();
@@ -132,15 +134,27 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
             </div>
           </div>
 
-          <div>
-            <label htmlFor="deadline" className="block text-sm font-medium text-gray-700 mb-1">Hạn chót (Deadline)</label>
-            <input
-              id="deadline"
-              type="date"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">Ngày bắt đầu</label>
+              <input
+                id="startDate"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="deadline" className="block text-sm font-medium text-gray-700 mb-1">Hạn chót (Deadline)</label>
+              <input
+                id="deadline"
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
           </div>
           
           <div>
