@@ -5,12 +5,18 @@ import { getProjectById } from '../services/projectService';
 import { Project } from '../types';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { MemberManagement } from '../components/MemberManagement';
+import { Toast } from '../components/Toast'; // ✨ THÊM TOAST
 
 const ProjectSettingsPage = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // ✨ TOAST THÔNG BÁO
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [showToast, setShowToast] = useState(false);
 
   const fetchProject = useCallback(async () => {
     if (!projectId) {
@@ -33,6 +39,18 @@ const ProjectSettingsPage = () => {
     fetchProject();
   }, [fetchProject]);
 
+  const handleSuccess = (msg: string) => {
+    setToastMessage(msg);
+    setToastType('success');
+    setShowToast(true);
+  };
+
+  const handleError = (msg: string) => {
+    setToastMessage(msg);
+    setToastType('error');
+    setShowToast(true);
+  };
+
   const renderContent = () => {
     if (loading) {
       return <div className="flex justify-center p-10"><Loader2 className="animate-spin text-indigo-600" size={32} /></div>;
@@ -43,7 +61,12 @@ const ProjectSettingsPage = () => {
     if (project) {
       return (
         <div className="space-y-8">
-          <MemberManagement project={project} onMemberRemoved={fetchProject} />
+          <MemberManagement 
+            project={project} 
+            onMemberRemoved={fetchProject} 
+            onSuccess={handleSuccess} // ✨ THÊM HÀM TOAST
+            onError={handleError}     // ✨ THÊM HÀM TOAST
+          />
           {/* WorkflowEditor component sẽ được thêm vào đây sau */}
         </div>
       );
@@ -66,8 +89,18 @@ const ProjectSettingsPage = () => {
           {renderContent()}
         </div>
       </main>
+
+      {/* ✨ TOAST THÔNG BÁO */}
+      {showToast && (
+        <Toast
+          type={toastType}
+          message={toastMessage}
+          onClose={() => setShowToast(false)}
+        />
+      )}
     </div>
   );
 };
 
 export default ProjectSettingsPage;
+
