@@ -12,6 +12,24 @@ interface TaskDetailsModalProps {
   onUpdate: (taskId: number, taskData: Partial<TaskItem> & { assignedUserIds?: number[] }) => Promise<void>;
 }
 
+//  Hàm helper để định dạng ngày tháng an toàn
+const formatDateForInput = (dateString: string | null | undefined): string => {
+  // Nếu không có chuỗi ngày tháng, trả về rỗng
+  if (!dateString) return '';
+  
+  // Tạo đối tượng Date, trình duyệt sẽ tự xử lý múi giờ
+  const date = new Date(dateString);
+  
+  // Lấy các thành phần của ngày theo giờ địa phương
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // getMonth() trả về từ 0-11
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  // Trả về định dạng YYYY-MM-DD mà input yêu cầu
+  return `${year}-${month}-${day}`;
+};
+
+
 export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, onClose, task, statuses, onUpdate }) => {
   const [editedTask, setEditedTask] = useState<Partial<TaskItem>>({});
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
@@ -22,8 +40,8 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, onCl
         title: task.title,
         description: task.description,
         priority: task.priority,
-        startDate: task.startDate ? task.startDate.split('T')[0] : '', // THÊM DÒNG NÀY
-        deadline: task.deadline ? task.deadline.split('T')[0] : '',
+        startDate: formatDateForInput(task.startDate),
+        deadline: formatDateForInput(task.deadline),
         statusId: task.statusId,
       });
       setSelectedUsers(task.taskAssignees?.map(a => a.user) || []);

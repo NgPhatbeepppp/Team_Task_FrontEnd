@@ -54,3 +54,15 @@ export interface TaskItem {
     taskAssignees?: { user: User }[];
     projectId: number; // ID của dự án mà task này thuộc về
 }
+export interface MyTaskItem {
+  id: number;
+  title: string;
+  deadline: string | null;
+  priority: 'Low' | 'Medium' | 'High';
+  statusId: number | null;
+  project: {
+    id: number;
+    name: string;
+    keyCode: string;
+  };
+}
