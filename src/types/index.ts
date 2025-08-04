@@ -57,6 +57,7 @@ export interface TaskItem {
 export interface MyTaskItem {
   id: number;
   title: string;
+  startDate: string | null;
   deadline: string | null;
   priority: 'Low' | 'Medium' | 'High';
   statusId: number | null;

@@ -1,11 +1,14 @@
 // src/components/CalendarView.tsx
-import React, { useState } from 'react'; 
+import React, { useState } from 'react';
 import { Calendar, dateFnsLocalizer, Event, Views } from 'react-big-calendar';
-import { format } from 'date-fns/format';
-import { parse } from 'date-fns/parse';
-import { startOfWeek } from 'date-fns/startOfWeek';
-import { getDay } from 'date-fns/getDay';
-import { vi } from 'date-fns/locale/vi';
+
+
+import format from 'date-fns/format';
+import parse from 'date-fns/parse';
+import startOfWeek from 'date-fns/startOfWeek';
+import getDay from 'date-fns/getDay';
+import { vi } from 'date-fns/locale'; 
+
 import { TaskItem } from '../types';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './CalendarView.css';
@@ -21,7 +24,7 @@ interface CalendarEvent extends Event {
 }
 
 const locales = {
-  'vi-VN': vi,
+  'vi': vi, // Sử dụng key 'vi' cho locale tiếng Việt
 };
 
 const localizer = dateFnsLocalizer({
@@ -33,7 +36,6 @@ const localizer = dateFnsLocalizer({
 });
 
 export const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSelectTask }) => {
- 
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const events: CalendarEvent[] = tasks.reduce((acc: CalendarEvent[], task) => {
@@ -72,14 +74,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onSelectTask 
         startAccessor="start"
         endAccessor="end"
         style={{ height: '100%' }}
-        culture="vi-VN"
+        culture="vi" // Sử dụng key 'vi'
         onSelectEvent={(event) => onSelectTask(event.resource)}
-        
-        
-        date={currentDate} // Luôn hiển thị ngày tháng từ state
-        onNavigate={date => setCurrentDate(date)} // Cập nhật state khi người dùng chuyển tháng
-        views={[Views.MONTH]} // Chỉ cho phép xem theo tháng
-        
+        date={currentDate}
+        onNavigate={date => setCurrentDate(date)}
+        views={[Views.MONTH]}
         messages={{
           next: "Sau",
           previous: "Trước",

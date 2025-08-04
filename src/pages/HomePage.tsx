@@ -1,5 +1,3 @@
-// src/pages/HomePage.tsx
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
@@ -10,6 +8,7 @@ import { getMyTasks } from '../services/taskService';
 import { getMyProjects } from '../services/projectService';
 import { getPendingInvitations } from '../services/invitationService';
 import { Loader2, Bell, Folder, CheckCircle, Clock } from 'lucide-react';
+import { DashboardCharts } from '../components/DashboardCharts'; // ✅ THÊM MỚI
 
 // --- Component Card thống kê ---
 const StatCard: React.FC<{ title: string; value: number | string; icon: React.ElementType; linkTo: string }> = ({ title, value, icon: Icon, linkTo }) => (
@@ -28,6 +27,7 @@ const StatCard: React.FC<{ title: string; value: number | string; icon: React.El
 const HomePage = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState({ tasks: 0, projects: 0, invitations: 0 });
+  const [allTasks, setAllTasks] = useState<MyTaskItem[]>([]); // ✅ THÊM MỚI: State cho tất cả tasks
   const [upcomingTasks, setUpcomingTasks] = useState<MyTaskItem[]>([]);
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,8 @@ const HomePage = () => {
           getPendingInvitations(),
         ]);
 
-        // Sắp xếp task theo deadline gần nhất, chỉ lấy 5 task
+        setAllTasks(tasks); // ✅ THÊM MỚI: Lưu tất cả tasks để dùng cho biểu đồ
+
         const sortedTasks = tasks
           .filter(t => t.deadline)
           .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime())
@@ -55,7 +56,7 @@ const HomePage = () => {
         });
         
         setUpcomingTasks(sortedTasks);
-        setRecentProjects(projects.slice(0, 4)); // Lấy 4 dự án gần nhất
+        setRecentProjects(projects.slice(0, 4));
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu trang chủ:", error);
       } finally {
@@ -94,8 +95,11 @@ const HomePage = () => {
             <StatCard title="Lời mời đang chờ" value={stats.invitations} icon={Bell} linkTo="/notifications" />
           </div>
 
+          {/* ✅ THÊM MỚI: Hiển thị các biểu đồ */}
+          <DashboardCharts tasks={allTasks} />
+
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
             {/* Cột nhiệm vụ sắp đến hạn */}
             <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow">
               <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">

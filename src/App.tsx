@@ -12,6 +12,7 @@ import ProjectWorkspacePage from './pages/ProjectWorkspacePage';
 import ProjectSettingsPage from './pages/ProjectSettingsPage';
 import MyTasksPage from './pages/MyTasksPage';
 import HomePage from './pages/HomePage'; 
+import MyCalendarPage from './pages/MyCalendarPage'; 
 
 // Component trung gian để xử lý logic Route được bảo vệ
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -55,7 +56,7 @@ function AppRoutes() {
       <Route path="/project/:projectId" element={<ProtectedRoute><ProjectWorkspacePage /></ProtectedRoute>} />
       <Route path="/project/:projectId/settings" element={<ProtectedRoute><ProjectSettingsPage /></ProtectedRoute>} />
 
-      {/* ✅ THAY ĐỔI: Route "catch-all" thông minh hơn */}
+       <Route path="/calendar" element={<ProtectedRoute><MyCalendarPage /></ProtectedRoute>} />
       <Route 
         path="*" 
         element={<Navigate to={isAuthenticated ? "/" : "/login"} />} 
