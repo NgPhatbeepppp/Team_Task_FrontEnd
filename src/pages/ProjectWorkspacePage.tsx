@@ -13,8 +13,10 @@ import { Loader2 } from 'lucide-react';
 import { ProjectHeader } from '../components/ProjectHeader';
 import { ViewSwitcher } from '../components/ViewSwitcher';
 import { TaskListView } from '../components/TaskListView';
+
 import { KanbanBoardView } from '../components/KanbanBoardView';
 import { TaskDetailsModal } from '../components/TaskDetailsModal';
+
 
 const ProjectWorkspacePage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -28,7 +30,9 @@ const ProjectWorkspacePage = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
 
+
   const [activeView, setActiveView] = useState<'list' | 'board' | 'calendar'>('list');
+
 
   const fetchProjectData = useCallback(async () => {
     if (!projectId) {
@@ -115,10 +119,16 @@ const ProjectWorkspacePage = () => {
   };
   
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100">
       <Sidebar activeItem="Quản lý dự án" />
+
       <main className="flex-grow p-6 sm:p-8 flex flex-col md:ml-64">
         <div className="max-w-full mx-auto w-full flex flex-col flex-grow">
+
+      <main className="p-6 sm:p-8 ml-[260px]"> {/* ✨ FIX TRÁNH CHE BỞI SIDEBAR */}
+        <div className="max-w-7xl mx-auto">
+          {/* ✨ SỬ DỤNG CÁC COMPONENT MỚI */}
+
           <ProjectHeader 
             project={project} 
             onOpenCreateTaskModal={() => setIsCreateModalOpen(true)}
@@ -132,6 +142,7 @@ const ProjectWorkspacePage = () => {
           </div>
         </div>
       </main>
+
       
       {projectId && (
         <CreateTaskModal 
@@ -149,6 +160,13 @@ const ProjectWorkspacePage = () => {
         task={selectedTask}
         statuses={statuses}
         onUpdate={handleUpdateTask}
+
+
+      <CreateTaskModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleCreateTask}
+
       />
     </div>
   );
