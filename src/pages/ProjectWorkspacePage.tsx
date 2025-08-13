@@ -1,5 +1,4 @@
 // src/pages/ProjectWorkspacePage.tsx
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
@@ -13,10 +12,10 @@ import { Loader2 } from 'lucide-react';
 import { ProjectHeader } from '../components/ProjectHeader';
 import { ViewSwitcher } from '../components/ViewSwitcher';
 import { TaskListView } from '../components/TaskListView';
-
 import { KanbanBoardView } from '../components/KanbanBoardView';
 import { TaskDetailsModal } from '../components/TaskDetailsModal';
-
+import { CalendarView } from '../components/CalendarView';
+import { useToast } from '../hooks/useToast';
 
 const ProjectWorkspacePage = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -25,14 +24,13 @@ const ProjectWorkspacePage = () => {
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null);
 
-
   const [activeView, setActiveView] = useState<'list' | 'board' | 'calendar'>('list');
-
+  const { addToast } = useToast();
 
   const fetchProjectData = useCallback(async () => {
     if (!projectId) {
@@ -41,8 +39,6 @@ const ProjectWorkspacePage = () => {
       return;
     }
     try {
-      // Giữ lại trạng thái loading cũ để không bị giật màn hình
-      // setLoading(true); 
       const [projectDetails, fetchedTasks, fetchedStatuses] = await Promise.all([
         getProjectById(Number(projectId)),
         getTasksByProjectId(Number(projectId)),
@@ -64,6 +60,16 @@ const ProjectWorkspacePage = () => {
     fetchProjectData();
   }, [fetchProjectData]);
 
+  const fetchOnlyStatuses = useCallback(async () => {
+    if (!projectId) return;
+    try {
+        const fetchedStatuses = await getProjectStatuses(Number(projectId));
+        setStatuses(fetchedStatuses);
+    } catch (error) {
+        console.error("Lỗi khi tải lại statuses:", error);
+    }
+  }, [projectId]);
+
   const handleCreateTask = async (taskData: Partial<Omit<TaskItem, 'taskAssignees'>> & { assignedUserIds?: number[] }) => {
     try {
       await createTask(taskData);
@@ -79,16 +85,16 @@ const ProjectWorkspacePage = () => {
         setSelectedTask(fullTask);
         setIsDetailsModalOpen(true);
     } catch (error) {
-        alert("Không thể tải chi tiết công việc.");
+        addToast({ message: "Không thể tải chi tiết công việc.", type: 'error' });
     }
   }
 
   const handleUpdateTask = async (taskId: number, taskData: Partial<TaskItem> & { assignedUserIds?: number[] }) => {
       try {
           await updateTask(taskId, taskData);
-          await fetchProjectData(); // Tải lại toàn bộ dữ liệu
+          await fetchProjectData(); 
       } catch (error) {
-          alert('Cập nhật thất bại');
+          addToast({ message: 'Cập nhật thất bại', type: 'error' });
           throw error;
       }
   }
@@ -105,47 +111,47 @@ const ProjectWorkspacePage = () => {
     if (error) {
       return <div className="text-center py-10 text-red-500">{error}</div>;
     }
-    
+
     switch(activeView) {
       case 'list':
         return <TaskListView tasks={tasks} statuses={statuses} onTaskUpdate={fetchProjectData} onTaskSelect={handleOpenTaskDetails} />;
       case 'board':
-        return <KanbanBoardView project={project} initialTasks={tasks} onTasksChange={fetchProjectData} />;
+        return <KanbanBoardView
+                  project={project}
+                  tasks={tasks}
+                  setTasks={setTasks}
+                  statuses={statuses}
+                  onStatusesChange={fetchOnlyStatuses}
+               />;
       case 'calendar':
-        return <div className="text-center p-10">Chế độ xem Lịch sẽ được phát triển sau.</div>;
+        return <CalendarView tasks={tasks} onSelectTask={handleOpenTaskDetails} />;
       default:
         return <TaskListView tasks={tasks} statuses={statuses} onTaskUpdate={fetchProjectData}  onTaskSelect={handleOpenTaskDetails} />;
     }
   };
-  
+
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 flex">
       <Sidebar activeItem="Quản lý dự án" />
 
       <main className="flex-grow p-6 sm:p-8 flex flex-col md:ml-64">
         <div className="max-w-full mx-auto w-full flex flex-col flex-grow">
-
-      <main className="p-6 sm:p-8 ml-[260px]"> {/* ✨ FIX TRÁNH CHE BỞI SIDEBAR */}
-        <div className="max-w-7xl mx-auto">
-          {/* ✨ SỬ DỤNG CÁC COMPONENT MỚI */}
-
-          <ProjectHeader 
-            project={project} 
+          <ProjectHeader
+            project={project}
             onOpenCreateTaskModal={() => setIsCreateModalOpen(true)}
           />
-          <ViewSwitcher 
+          <ViewSwitcher
             activeView={activeView}
             onViewChange={setActiveView}
           />
-          <div className="flex-grow">
+          <div className="flex-grow mt-4">
             {renderContent()}
           </div>
         </div>
       </main>
 
-      
       {projectId && (
-        <CreateTaskModal 
+        <CreateTaskModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onSubmit={handleCreateTask}
@@ -153,20 +159,13 @@ const ProjectWorkspacePage = () => {
           statuses={statuses}
         />
       )}
-      
+
       <TaskDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
         task={selectedTask}
         statuses={statuses}
         onUpdate={handleUpdateTask}
-
-
-      <CreateTaskModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateTask}
-
       />
     </div>
   );

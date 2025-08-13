@@ -46,10 +46,24 @@ export interface TaskItem {
     title: string;
     description: string | null;
     priority: 'Low' | 'Medium' | 'High';
+    startDate: string | null;
     deadline: string | null;
     createdAt: string;
     statusId: number | null;
     
     taskAssignees?: { user: User }[];
     projectId: number; // ID của dự án mà task này thuộc về
+}
+export interface MyTaskItem {
+  id: number;
+  title: string;
+  startDate: string | null;
+  deadline: string | null;
+  priority: 'Low' | 'Medium' | 'High';
+  statusId: number | null;
+  project: {
+    id: number;
+    name: string;
+    keyCode: string;
+  };
 }

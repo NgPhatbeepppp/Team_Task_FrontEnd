@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useToast } from '../hooks/useToast';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { addToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +26,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
       setDescription('');
       onClose();
     } catch (error) {
-      alert('Tạo dự án thất bại. Vui lòng thử lại.');
+      addToast({ message: 'Tạo dự án thất bại. Vui lòng thử lại.', type: 'error' });
       console.error(error);
     } finally {
       setIsSubmitting(false);

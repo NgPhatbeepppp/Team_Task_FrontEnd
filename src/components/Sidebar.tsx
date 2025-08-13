@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { getMyProjects, Project } from '../services/projectService'; // ✅ 1. IMPORT
+import { getMyProjects, Project } from '../services/projectService';
+import { ConfirmationModal } from './ConfirmationModal';
 import {
   HomeIcon, UserGroupIcon, FolderIcon, DocumentTextIcon, CalendarIcon,
   ChatBubbleLeftIcon, Cog6ToothIcon, UserIcon, ArrowLeftOnRectangleIcon,
@@ -15,46 +16,43 @@ type MenuItem = {
   label: string;
   icon: React.ElementType;
   path: string;
-  isProjectMenu?: boolean; // Đánh dấu mục đặc biệt
+  isProjectMenu?: boolean;
 };
 
 const menuItems: MenuItem[] = [
-  { label: 'Trang chủ', icon: HomeIcon, path: '/' },
-  { label: 'Quản lý nhóm', icon: UserGroupIcon, path: '/teams' },
-  { label: 'Quản lý dự án', icon: FolderIcon, path: '/projects', isProjectMenu: true }, // Đánh dấu đây là menu dự án
-  { label: 'Nhiệm vụ', icon: DocumentTextIcon, path: '/tasks' },
-  { label: 'Lời mời & Thông báo', icon: BellIcon, path: '/notifications' },
-  { label: 'Lịch', icon: CalendarIcon, path: '/calendar' },
-  { label: 'Cuộc trò chuyện', icon: ChatBubbleLeftIcon, path: '/chat' },
-  { label: 'Cài đặt nâng cao', icon: Cog6ToothIcon, path: '/settings' },
-  { label: 'Tài khoản cá nhân', icon: UserIcon, path: '/profile' },
+    { label: 'Trang chủ', icon: HomeIcon, path: '/' },
+    { label: 'Quản lý nhóm', icon: UserGroupIcon, path: '/teams' },
+    { label: 'Quản lý dự án', icon: FolderIcon, path: '/projects', isProjectMenu: true },
+    { label: 'Nhiệm vụ', icon: DocumentTextIcon, path: '/tasks' },
+    { label: 'Lời mời & Thông báo', icon: BellIcon, path: '/notifications' },
+    { label: 'Lịch', icon: CalendarIcon, path: '/calendar' },
+    { label: 'Cuộc trò chuyện', icon: ChatBubbleLeftIcon, path: '/chat' },
+    { label: 'Cài đặt nâng cao', icon: Cog6ToothIcon, path: '/settings' },
+    { label: 'Tài khoản cá nhân', icon: UserIcon, path: '/profile' },
 ];
 
 // --- Component chính ---
 export default function Sidebar({ activeItem }: { activeItem: string }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isProjectsExpanded, setIsProjectsExpanded] = useState(false); // ✅ 2. STATE CHO MENU CON
-  const [myProjects, setMyProjects] = useState<Project[]>([]); // ✅ 3. STATE LƯU DỰ ÁN
-
+  const [isProjectsExpanded, setIsProjectsExpanded] = useState(false);
+  const [myProjects, setMyProjects] = useState<Project[]>([]);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ 4. LẤY DANH SÁCH DỰ ÁN KHI COMPONENT MOUNT
   useEffect(() => {
     getMyProjects()
       .then(projects => setMyProjects(projects))
       .catch(err => console.error("Không thể tải danh sách dự án cho sidebar:", err));
   }, []);
 
-  // Mở menu con nếu đang ở trang dự án
   useEffect(() => {
     if (location.pathname.startsWith('/project')) {
       setIsProjectsExpanded(true);
     }
   }, [location.pathname]);
   
-  // Logic responsive
   useEffect(() => {
     const handleResize = () => setIsOpen(window.innerWidth >= 768);
     window.addEventListener('resize', handleResize);
@@ -62,18 +60,19 @@ export default function Sidebar({ activeItem }: { activeItem: string }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleLogout = () => {
-    if (window.confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
-      logout();
-      navigate('/login');
-    }
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   const projectsToShow = myProjects.slice(0, 3);
 
   return (
     <>
-      {/* Nút bật/tắt sidebar trên mobile */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed top-4 left-4 z-50 p-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition-colors md:hidden"
@@ -99,7 +98,6 @@ export default function Sidebar({ activeItem }: { activeItem: string }) {
                 {menuItems.map(({ label, icon: Icon, path, isProjectMenu }) => (
                   <li key={label}>
                     {isProjectMenu ? (
-                      // ✅ 5. RENDER MENU DỰ ÁN ĐẶC BIỆT
                       <div>
                         <div
                           onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
@@ -144,7 +142,6 @@ export default function Sidebar({ activeItem }: { activeItem: string }) {
                         </AnimatePresence>
                       </div>
                     ) : (
-                      // Render các mục menu bình thường
                       <Link to={path} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
                           label === activeItem
                             ? 'bg-indigo-50 text-indigo-700 font-semibold'
@@ -159,19 +156,32 @@ export default function Sidebar({ activeItem }: { activeItem: string }) {
                 ))}
               </ul>
             </nav>
-            {/* Nút đăng xuất */}
+            
+            {/* VỊ TRÍ ĐÚNG CỦA NÚT ĐĂNG XUẤT */}
             <div className="p-4 mt-auto border-t border-gray-100">
               <button
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 className="w-full flex items-center gap-3 p-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
               >
                 <ArrowLeftOnRectangleIcon className="w-6 h-6 shrink-0" />
                 <span className="font-semibold">Đăng xuất</span>
               </button>
             </div>
+            
           </motion.aside>
         )}
       </AnimatePresence>
+
+      {/* Modal xác nhận có thể đặt ở đây hoặc bên ngoài motion.aside đều được */}
+      <ConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={confirmLogout}
+        title="Xác nhận Đăng xuất"
+        message="Bạn có chắc chắn muốn đăng xuất khỏi tài khoản của mình không?"
+        confirmText="Đăng xuất"
+        confirmButtonVariant="danger"
+      />
     </>
   );
 }

@@ -1,294 +1,269 @@
+// src/pages/TeamPage.tsx
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import TeamCard from '../components/TeamCard';
 import { InviteMemberModal } from '../components/InviteMemberModal';
 import { SelectMemberModal } from '../components/SelectMemberModal';
-import { CreateTeamModal } from '../components/CreateTeamModal'; // ✨ 1. IMPORT MODAL TẠO NHÓM
-import { LeaveTeamModal } from '../components/LeaveTeamModal'; // ✨ IMPORT MODAL RỜI NHÓM
-import { DeleteTeamModal } from '../components/DeleteTeamModal'; // ✨ IMPORT MODAL XÓA NHÓM
-import { ConfirmGrantLeaderModal } from '../components/ConfirmGrantLeaderModal'; // ✨ IMPORT MODAL TRAO QUYỀN TRƯỞNG NHÓM
-import { SuccessModal } from '../components/SuccessModal'; // ✨ IMPORT MODAL THÀNH CÔNG from '../components/ConfirmGrantLeaderModal'; // ✨ IMPORT MODAL TRAO QUYỀN TRƯỞNG NHÓM
+import { CreateTeamModal } from '../components/CreateTeamModal';
+import { ConfirmationModal } from '../components/ConfirmationModal'; // Giữ lại Modal chung
 import {
   getMyTeams,
   createTeam,
   deleteTeam,
   leaveTeam,
   grantLeaderRole,
-  inviteUserToTeam,
   Team,
 } from '../services/teamService';
 import { useAuth } from '../hooks/useAuth';
+import { Loader2 } from 'lucide-react';
+import { useToast } from '../hooks/useToast';
 
 const TeamPage = () => {
-    // --- STATES ---
-    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false); // ✨ STATE MODAL THÀNH CÔNG
-    const [successMessage, setSuccessMessage] = useState(''); // ✨ NỘI DUNG MODAL THÀNH CÔNG
-    const [isConfirmGrantModalOpen, setIsConfirmGrantModalOpen] = useState(false); // ✨ STATE XÁC NHẬN TRAO QUYỀN
-    const [selectedUserToGrant, setSelectedUserToGrant] = useState<number | null>(null); // ✨ LƯU USER MUỐN TRAO QUYỀN
-    const [teams, setTeams] = useState<Team[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // States for modals
+  const [isGrantLeaderModalOpen, setIsGrantLeaderModalOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedTeamForModal, setSelectedTeamForModal] = useState<Team | null>(null);
 
-    const [isGrantLeaderModalOpen, setIsGrantLeaderModalOpen] = useState(false);
-    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // ✨ 2. THÊM STATE CHO MODAL TẠO NHÓM
-    const [selectedTeamForModal, setSelectedTeamForModal] = useState<Team | null>(null);
+  // States for the generic confirmation modal
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [confirmModalContent, setConfirmModalContent] = useState({ title: '', message: '', confirmText: 'Xác nhận' });
+  const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
 
-    const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false); // ✨ STATE CHO MODAL RỜI NHÓM
-    const [teamToLeave, setTeamToLeave] = useState<Team | null>(null); // ✨ LƯU TEAM ĐỂ RỜI
+  const { user } = useAuth();
+  const { addToast } = useToast();
+  const currentUserId = user?.id;
 
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // ✨ STATE MODAL XÓA NHÓM
-    const [teamToDelete, setTeamToDelete] = useState<Team | null>(null); // ✨ LƯU TEAM ĐỂ XÓA
+  const fetchTeams = async () => {
+    try {
+      setLoading(true);
+      const userTeams = await getMyTeams();
+      setTeams(userTeams);
+      setError(null);
+    } catch (err) {
+      setError('Không thể tải danh sách nhóm. Vui lòng thử lại.');
+      console.error("Lỗi khi fetch teams:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const { user } = useAuth();
-    const currentUserId = user?.id;
+  useEffect(() => {
+    if (currentUserId) {
+      fetchTeams();
+    } else {
+      setLoading(false);
+    }
+  }, [currentUserId]);
 
-    // --- DATA FETCHING ---
-    const fetchTeams = async () => {
-        try {
-            setLoading(true);
-            const userTeams = await getMyTeams();
-            setTeams(userTeams);
-            setError(null);
-        } catch (err) {
-            setError('Không thể tải danh sách nhóm. Vui lòng thử lại.');
-            console.error("Lỗi khi fetch teams:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+  // Modal Handlers
+  const handleOpenGrantLeaderModal = (team: Team) => {
+    setSelectedTeamForModal(team);
+    setIsGrantLeaderModalOpen(true);
+  };
+  const handleCloseGrantLeaderModal = () => {
+    setIsGrantLeaderModalOpen(false);
+    setSelectedTeamForModal(null);
+  };
 
-    useEffect(() => {
+  const handleOpenInviteModal = (team: Team) => {
+    setSelectedTeamForModal(team);
+    setIsInviteModalOpen(true);
+  };
+  const handleCloseInviteModal = () => {
+    setIsInviteModalOpen(false);
+    setSelectedTeamForModal(null);
+  };
+  
+  // Action Handlers using the generic ConfirmationModal
+  const handleGrantLeaderSelect = (targetUserId: number) => {
+    const team = selectedTeamForModal;
+    const member = team?.teamMembers.find(m => m.userId === targetUserId);
+    if (!team || !member) return;
+
+    setConfirmModalContent({
+      title: 'Xác nhận trao quyền',
+      message: `Bạn có chắc muốn trao quyền trưởng nhóm cho "${member.user.username}"? Hành động này không thể hoàn tác.`,
+      confirmText: 'Trao quyền'
+    });
+    
+    setConfirmAction(() => async () => {
+      try {
+        await grantLeaderRole(team.id, targetUserId);
+        addToast({ message: 'Trao quyền thành công!', type: 'success' });
+        fetchTeams();
+      } catch (err) {
+        addToast({ message: 'Trao quyền thất bại.', type: 'error' });
+      } finally {
+        handleCloseGrantLeaderModal();
+      }
+    });
+
+    setIsGrantLeaderModalOpen(false);
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleDeleteTeam = (teamId: number, teamName: string) => {
+    setConfirmModalContent({
+      title: 'Xác nhận xóa nhóm',
+      message: `Bạn có chắc chắn muốn xóa nhóm "${teamName}" không? Mọi dữ liệu liên quan sẽ bị mất vĩnh viễn.`,
+      confirmText: 'Xóa nhóm'
+    });
+
+    setConfirmAction(() => async () => {
+      try {
+        await deleteTeam(teamId);
+        addToast({ message: 'Xóa nhóm thành công!', type: 'success' });
+        setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));
+      } catch (err) {
+        addToast({ message: 'Xóa nhóm thất bại.', type: 'error' });
+      }
+    });
+    
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleLeaveTeam = (teamId: number) => {
+    setConfirmModalContent({
+      title: 'Xác nhận rời nhóm',
+      message: 'Bạn có chắc chắn muốn rời khỏi nhóm này?',
+      confirmText: 'Rời nhóm'
+    });
+    
+    setConfirmAction(() => async () => {
+      try {
         if (currentUserId) {
-            fetchTeams();
-        } else {
-            setLoading(false);
+          await leaveTeam(teamId);
+          addToast({ message: 'Rời nhóm thành công!', type: 'success' });
+          setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));
         }
-    }, [currentUserId]);
+      } catch (err) {
+        addToast({ message: 'Rời nhóm thất bại.', type: 'error' });
+      }
+    });
 
-    // --- MODAL HANDLERS ---
-    const handleOpenGrantLeaderModal = (team: Team) => {
-        setSelectedTeamForModal(team);
-        setIsGrantLeaderModalOpen(true);
-    };
-    const handleCloseGrantLeaderModal = () => {
-        setIsGrantLeaderModalOpen(false);
-        setSelectedTeamForModal(null);
-    };
+    setIsConfirmModalOpen(true);
+  };
+  
+  const handleCreateTeam = async (teamData: { name: string; description: string | null }) => {
+    try {
+      await createTeam(teamData);
+      addToast({ message: 'Tạo nhóm thành công!', type: 'success' });
+      fetchTeams();
+    } catch (err) {
+      addToast({ message: 'Tạo nhóm thất bại.', type: 'error' });
+      throw err;
+    }
+  };
 
-    const handleOpenInviteModal = (team: Team) => {
-        setSelectedTeamForModal(team);
-        setIsInviteModalOpen(true);
-    };
-    const handleCloseInviteModal = () => {
-        setIsInviteModalOpen(false);
-        setSelectedTeamForModal(null);
-    };
+  const handleNavigateToDetails = (teamId: number) => {
+    // Logic điều hướng sẽ được thêm ở đây, ví dụ: navigate(`/teams/${teamId}`);
+    console.log(`Điều hướng đến trang chi tiết của nhóm ID: ${teamId}`);
+  };
 
-    // --- ACTION HANDLERS ---
-
-    const handleGrantLeader = (targetUserId: number) => {
-        if (!selectedTeamForModal) return;
-        setSelectedUserToGrant(targetUserId); // ✨ MỞ MODAL XÁC NHẬN TRAO QUYỀN
-        setIsConfirmGrantModalOpen(true);
-    };
-
-    const handleInviteMember = async (targetUserId: number) => {
-        if (!selectedTeamForModal) return;
-        try {
-            await inviteUserToTeam(selectedTeamForModal.id, targetUserId);
-            setSuccessMessage('Đã gửi lời mời thành công!');
-            setIsSuccessModalOpen(true);
-        } catch (err) {
-            alert('Gửi lời mời thất bại. Người dùng có thể đã ở trong nhóm hoặc đã có lời mời đang chờ.');
-        }
-    };
-
-    // ✨ 3. CẬP NHẬT HÀM ĐỂ NHẬN DỮ LIỆU TỪ MODAL
-    const handleCreateTeam = async (teamData: { name: string; description: string | null }) => {
-        try {
-            await createTeam(teamData);
-            fetchTeams();
-        } catch (err) {
-            alert('Tạo nhóm thất bại.');
-            throw err; // Ném lỗi để modal không tự đóng
-        }
-    };
-
-    const handleNavigateToDetails = (teamId: number) => {
-        console.log(`Điều hướng đến trang chi tiết của nhóm ID: ${teamId}`);
-    };
-
-    const handleDeleteTeam = (teamId: number) => {
-        // ✨ 8. MỞ MODAL XÁC NHẬN XÓA THAY CHO window.confirm
-        const team = teams.find(t => t.id === teamId);
-        if (team) {
-            setTeamToDelete(team);
-            setIsDeleteModalOpen(true);
-        }
-    };
-
-    const confirmDeleteTeam = async () => {
-        if (!teamToDelete) return;
-        try {
-            await deleteTeam(teamToDelete.id);
-            setTeams(prev => prev.filter(t => t.id !== teamToDelete.id));
-        } catch (err) {
-            alert('Xóa nhóm thất bại.');
-        } finally {
-            setIsDeleteModalOpen(false);
-            setTeamToDelete(null);
-        }
-    };
-
-    const handleLeaveTeam = (teamId: number) => {
-        // ✨ 6. THAY ĐỔI: Dùng modal confirm thay cho window.confirm
-        const team = teams.find(t => t.id === teamId);
-        if (team) {
-            setTeamToLeave(team);
-            setIsLeaveModalOpen(true);
-        }
-    };
-
-    const confirmLeaveTeam = async () => {
-        if (!teamToLeave || !currentUserId) return;
-        try {
-            await leaveTeam(teamToLeave.id, currentUserId);
-            setTeams(prev => prev.filter(t => t.id !== teamToLeave.id));
-        } catch (err) {
-            alert('Rời nhóm thất bại.');
-        } finally {
-            setIsLeaveModalOpen(false);
-            setTeamToLeave(null);
-        }
-    };
-
-    const confirmGrantLeader = async () => {
-        if (!selectedTeamForModal || selectedUserToGrant === null) return;
-        try {
-            await grantLeaderRole(selectedTeamForModal.id, selectedUserToGrant);
-            setSuccessMessage('Bạn đã trao quyền trưởng nhóm thành công!');
-            setIsSuccessModalOpen(true);
-            fetchTeams();
-        } catch (err) {
-            alert('Trao quyền thất bại.');
-        } finally {
-            setIsConfirmGrantModalOpen(false);
-            setSelectedUserToGrant(null);
-            handleCloseGrantLeaderModal();
-        }
-    };
-
-// --- RENDER LOGIC ---
-    const renderContent = () => {
-        if (loading) return <div className="text-center py-10">Đang tải dữ liệu...</div>;
-        if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
-        if (!user) return <div className="text-center py-10">Vui lòng đăng nhập để xem các nhóm.</div>;
-        if (teams.length === 0) return <div className="text-center py-10">Bạn chưa tham gia nhóm nào. Hãy tạo một nhóm mới!</div>;
-
-        return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {teams.map(team => {
-                    const currentUserMembership = team.teamMembers.find(m => m.userId === currentUserId);
-                    const currentUserRole = currentUserMembership?.roleInTeam || 'Member';
-
-                    return (
-                        <TeamCard
-                            key={team.id}
-                            team={team}
-                            currentUserRole={currentUserRole}
-                            onNavigateToDetails={handleNavigateToDetails}
-                            onDeleteTeam={handleDeleteTeam}
-                            onLeaveTeam={handleLeaveTeam}
-                            onOpenGrantLeaderModal={handleOpenGrantLeaderModal}
-                            onOpenInviteModal={handleOpenInviteModal}
-                        />
-                    );
-                })}
-            </div>
-        );
-    };
+  const renderContent = () => {
+    if (loading) return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+      </div>
+    );
+    if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
+    if (!user) return <div className="text-center py-10">Vui lòng đăng nhập để xem các nhóm.</div>;
+    if (teams.length === 0) return (
+      <div className="text-center py-20 bg-gray-50 rounded-lg">
+        <h3 className="text-xl font-semibold text-gray-700">Không tìm thấy nhóm nào</h3>
+        <p className="mt-2 text-gray-500">Bạn chưa tham gia nhóm nào. Hãy tạo một nhóm mới để bắt đầu!</p>
+      </div>
+    );
 
     return (
-        <div className="flex min-h-screen bg-gray-100">
-            <Sidebar activeItem="Quản lý nhóm" />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        {teams.map(team => {
+          const currentUserMembership = team.teamMembers.find(m => m.userId === currentUserId);
+          const currentUserRole = currentUserMembership?.roleInTeam || 'Member';
 
-            <main className="flex-grow p-6 sm:p-8 md:ml-64">
-
-            <main className="flex-grow p-6 sm:p-8" style={{ marginLeft: '256px' }}> {/* ✓ FIX đè Sidebar */}
-
-                <div className="max-w-7xl mx-auto">
-                    <header className="flex justify-between items-center mb-8">
-                        <h1 className="text-3xl font-bold text-gray-800">Nhóm Của Tôi</h1>
-                        <button
-                            // ✨ 4. THAY ĐỔI onClick ĐỂ MỞ MODAL
-                            onClick={() => setIsCreateModalOpen(true)}
-                            className="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition"
-                        >
-                            + Tạo Nhóm Mới
-                        </button>
-                    </header>
-                    {renderContent()}
-                </div>
-            </main>
-
-            {/* ✨ 5. RENDER CÁC MODAL */}
-            <CreateTeamModal
-                isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
-                onSubmit={handleCreateTeam}
+          return (
+            <TeamCard
+              key={team.id}
+              team={team}
+              currentUserRole={currentUserRole}
+              onNavigateToDetails={handleNavigateToDetails}
+              onDeleteTeam={() => handleDeleteTeam(team.id, team.name)}
+              onLeaveTeam={() => handleLeaveTeam(team.id)}
+              onOpenGrantLeaderModal={handleOpenGrantLeaderModal}
+              onOpenInviteModal={handleOpenInviteModal}
             />
-
-            {selectedTeamForModal && currentUserId && (
-                <>
-                    <SelectMemberModal
-                        isOpen={isGrantLeaderModalOpen}
-                        onClose={handleCloseGrantLeaderModal}
-                        members={selectedTeamForModal.teamMembers}
-                        onSelectMember={handleGrantLeader}
-                        teamName={selectedTeamForModal.name}
-                        currentUserId={currentUserId}
-                    />
-                    <InviteMemberModal
-                        isOpen={isInviteModalOpen}
-                        onClose={handleCloseInviteModal}
-                        onInvite={handleInviteMember}
-                        teamId={selectedTeamForModal.id}
-                        teamName={selectedTeamForModal.name}
-                    />
-                </>
-            )}
-
-            {/* ✨ 7. MODAL XÁC NHẬN RỜI NHÓM */}
-            <LeaveTeamModal
-                isOpen={isLeaveModalOpen}
-                onClose={() => setIsLeaveModalOpen(false)}
-                onConfirm={confirmLeaveTeam}
-                teamName={teamToLeave?.name || ''}
-            />
-
-            {/* ✨ 9. MODAL XÁC NHẬN XÓA NHÓM */}
-            <DeleteTeamModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                onConfirm={confirmDeleteTeam}
-                teamName={teamToDelete?.name || ''}
-            />
-
-            {/* ✨ 10. MODAL XÁC NHẬN TRAO QUYỀN TRƯỞNG NHÓM */}
-            <ConfirmGrantLeaderModal
-                isOpen={isConfirmGrantModalOpen}
-                onClose={() => setIsConfirmGrantModalOpen(false)}
-                onConfirm={confirmGrantLeader}
-            />
-                    {/* ✨ 11. MODAL HIỂN THỊ TRAO QUYỀN THÀNH CÔNG */}
-            <SuccessModal
-                isOpen={isSuccessModalOpen}
-                onClose={() => setIsSuccessModalOpen(false)}
-                message={successMessage}
-            />
-        </div>
+          );
+        })}
+      </div>
     );
+  };
+
+  return (
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Sidebar activeItem="Quản lý nhóm" />
+      <main className="flex-grow p-6 sm:p-8 md:ml-64">
+        <div className="max-w-7xl mx-auto">
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+              <div>
+                <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100">Nhóm Của Tôi</h1>
+                <p className="mt-1 text-gray-500 dark:text-gray-400">Tất cả các nhóm bạn đang tham gia.</p>
+              </div>
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="mt-4 md:mt-0 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-transform hover:scale-105"
+              >
+                + Tạo Nhóm Mới
+              </button>
+          </header>
+          {renderContent()}
+        </div>
+      </main>
+
+      {/* Modals */}
+      <CreateTeamModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSubmit={handleCreateTeam}
+      />
+
+      {selectedTeamForModal && currentUserId && (
+        <>
+          <SelectMemberModal
+            isOpen={isGrantLeaderModalOpen}
+            onClose={handleCloseGrantLeaderModal}
+            members={selectedTeamForModal.teamMembers}
+            onSelectMember={handleGrantLeaderSelect}
+            teamName={selectedTeamForModal.name}
+            currentUserId={currentUserId}
+          />
+          <InviteMemberModal
+            isOpen={isInviteModalOpen}
+            onClose={handleCloseInviteModal}
+            teamId={selectedTeamForModal.id}
+            teamName={selectedTeamForModal.name}
+          />
+        </>
+      )}
+      
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={() => {
+          confirmAction?.();
+          setIsConfirmModalOpen(false);
+        }}
+        title={confirmModalContent.title}
+        message={confirmModalContent.message}
+        confirmText={confirmModalContent.confirmText}
+        confirmButtonVariant="danger"
+      />
+    </div>
+  );
 };
 
 export default TeamPage;

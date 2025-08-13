@@ -1,7 +1,7 @@
 // src/services/taskService.ts
 
 import api from './api';
-import { TaskItem } from '../types';
+import { TaskItem, MyTaskItem } from '../types';
 
 /**
  * Lấy tất cả các task thuộc về một dự án.
@@ -53,4 +53,12 @@ export const updateTaskPriority = async (taskId: number, priority: 'Low' | 'Medi
  */
 export const updateTaskStatus = async (taskId: number, newStatusId: number): Promise<void> => {
     await api.put(`/tasks/${taskId}/status`, { newStatusId });
+};
+/**
+ * Lấy tất cả các task được giao cho người dùng hiện tại.
+ * Backend: GET /api/tasks/mine
+ */
+export const getMyTasks = async (): Promise<MyTaskItem[]> => {
+    const response = await api.get<MyTaskItem[]>('/tasks/mine');
+    return response.data;
 };

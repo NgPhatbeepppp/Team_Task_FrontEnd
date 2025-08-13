@@ -1,3 +1,4 @@
+// src/pages/NotificationsPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   getPendingInvitations,
@@ -7,7 +8,7 @@ import {
 } from '../services/invitationService';
 import Sidebar from '../components/Sidebar';
 import { Mail, Check, X, Loader2, Bell } from 'lucide-react';
-import { SuccessModal } from '../components/SuccessModal'; // ✨ IMPORT MODAL THÀNH CÔNG
+import { useToast } from '../hooks/useToast';
 
 // --- Component Card cho mỗi lời mời ---
 interface InvitationCardProps {
@@ -17,8 +18,7 @@ interface InvitationCardProps {
 
 const InvitationCard: React.FC<InvitationCardProps> = ({ invitation, onAction }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false); // ✨ STATE MODAL THÀNH CÔNG
-  const [successMessage, setSuccessMessage] = useState(''); // ✨ NỘI DUNG MODAL
+  const { addToast } = useToast();
 
   const invitationTypeText = invitation.invitationType === 'Project' ? 'dự án' : 'nhóm';
 
@@ -27,70 +27,61 @@ const InvitationCard: React.FC<InvitationCardProps> = ({ invitation, onAction })
     try {
       if (action === 'accept') {
         await acceptInvitation(invitation);
-        setSuccessMessage('Bạn đã chấp nhận lời mời thành công!');
-        setIsSuccessModalOpen(true);
+        addToast({ message: 'Đã chấp nhận lời mời!', type: 'success' });
       } else {
         await rejectInvitation(invitation);
-        setSuccessMessage('Bạn đã từ chối lời mời.');
-        setIsSuccessModalOpen(true);
+        addToast({ message: 'Đã từ chối lời mời.', type: 'success' });
       }
-      onAction();
+      onAction(); // Gọi lại hàm để tải lại danh sách
     } catch (error) {
-      alert(`Đã có lỗi xảy ra: ${error}`);
+      // Đảm bảo hiển thị lỗi nếu có sự cố
+      addToast({ message: `Đã có lỗi xảy ra: ${error}`, type: 'error' });
       setIsLoading(false);
     }
   };
 
   return (
-    <>
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center justify-between transition-transform transform hover:scale-[1.02]">
-        <div className="flex items-center">
-          <div className="bg-blue-100 p-3 rounded-full mr-4">
-            <Mail className="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-gray-800">
-              <span className="font-semibold">{invitation.inviterName}</span> đã mời bạn tham gia vào {invitationTypeText}{' '}
-              <span className="font-semibold">"{invitation.targetName}"</span>.
-            </p>
-            <p className="text-xs text-gray-500">{new Date(invitation.sentAt).toLocaleString()}</p>
-          </div>
+    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center justify-between transition-transform transform hover:scale-[1.02]">
+      <div className="flex items-center">
+        <div className="bg-blue-100 p-3 rounded-full mr-4">
+          <Mail className="w-6 h-6 text-blue-600" />
         </div>
-        <div className="flex items-center gap-2">
-          {isLoading ? (
-            <Loader2 className="w-5 h-5 text-gray-500 animate-spin" />
-          ) : (
-            <>
-              <button
-                onClick={() => handleAction('accept')}
-                disabled={isLoading}
-                className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 disabled:bg-gray-300 transition"
-                title="Chấp nhận"
-              >
-                <Check className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => handleAction('reject')}
-                disabled={isLoading}
-                className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 disabled:bg-gray-300 transition"
-                title="Từ chối"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </>
-          )}
+        <div>
+          <p className="text-gray-800">
+            <span className="font-semibold">{invitation.inviterName}</span> đã mời bạn tham gia vào {invitationTypeText}{' '}
+            <span className="font-semibold">"{invitation.targetName}"</span>.
+          </p>
+          <p className="text-xs text-gray-500">{new Date(invitation.sentAt).toLocaleString()}</p>
         </div>
       </div>
-
-      {/* ✨ MODAL THÀNH CÔNG CHO CHẤP NHẬN / TỪ CHỐI LỜI MỜI */}
-      <SuccessModal
-        isOpen={isSuccessModalOpen}
-        onClose={() => setIsSuccessModalOpen(false)}
-        message={successMessage}
-      />
-    </>
+      <div className="flex items-center gap-2">
+        {isLoading ? (
+          <Loader2 className="w-5 h-5 text-gray-500 animate-spin" />
+        ) : (
+          <>
+            <button
+              onClick={() => handleAction('accept')}
+              disabled={isLoading}
+              className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 disabled:bg-gray-300 transition"
+              title="Chấp nhận"
+            >
+              <Check className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => handleAction('reject')}
+              disabled={isLoading}
+              className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 disabled:bg-gray-300 transition"
+              title="Từ chối"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </>
+        )}
+      </div>
+    </div>
   );
 };
+
 
 // --- Component Tab Lời mời ---
 const InvitationTab: React.FC = () => {
@@ -136,6 +127,7 @@ const InvitationTab: React.FC = () => {
     </div>
   );
 };
+
 
 // --- Component Trang chính ---
 const NotificationsPage: React.FC = () => {

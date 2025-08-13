@@ -1,0 +1,35 @@
+/* src/components/CalendarView.css */
+
+.rbc-calendar {
+  font-family: 'Poppins', sans-serif;
+}
+
+.rbc-toolbar {
+  margin-bottom: 1.5rem;
+}
+
+.rbc-btn-group button {
+  border-radius: 6px !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.rbc-btn-group button:hover {
+    background-color: #eef2ff !important;
+    color: #4f46e5 !important;
+}
+
+.rbc-toolbar .rbc-toolbar-label {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.rbc-event {
+  background-color: #4f46e5;
+  border-color: #4338ca;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.rbc-day-bg.rbc-today {
+  background-color: #f0fdf4;
+}

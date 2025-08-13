@@ -12,6 +12,24 @@ interface TaskDetailsModalProps {
   onUpdate: (taskId: number, taskData: Partial<TaskItem> & { assignedUserIds?: number[] }) => Promise<void>;
 }
 
+//  Hàm helper để định dạng ngày tháng an toàn
+const formatDateForInput = (dateString: string | null | undefined): string => {
+  // Nếu không có chuỗi ngày tháng, trả về rỗng
+  if (!dateString) return '';
+  
+  // Tạo đối tượng Date, trình duyệt sẽ tự xử lý múi giờ
+  const date = new Date(dateString);
+  
+  // Lấy các thành phần của ngày theo giờ địa phương
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // getMonth() trả về từ 0-11
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  // Trả về định dạng YYYY-MM-DD mà input yêu cầu
+  return `${year}-${month}-${day}`;
+};
+
+
 export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, onClose, task, statuses, onUpdate }) => {
   const [editedTask, setEditedTask] = useState<Partial<TaskItem>>({});
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
@@ -22,9 +40,8 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, onCl
         title: task.title,
         description: task.description,
         priority: task.priority,
-        // Dòng này rất quan trọng: nó định dạng ngày cho thẻ <input type="date">
-        // Hoặc trả về chuỗi rỗng nếu không có deadline
-        deadline: task.deadline ? task.deadline.split('T')[0] : '',
+        startDate: formatDateForInput(task.startDate),
+        deadline: formatDateForInput(task.deadline),
         statusId: task.statusId,
       });
       setSelectedUsers(task.taskAssignees?.map(a => a.user) || []);
@@ -41,9 +58,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, onCl
     if (!task) return;
     const assignedUserIds = selectedUsers.map(u => u.id);
 
-    // Chuẩn bị dữ liệu gửi đi
     const finalTaskData = { ...editedTask };
-    // Nếu deadline là chuỗi rỗng, backend sẽ hiểu là null nhờ có JsonConverter
     
     await onUpdate(task.id, { ...finalTaskData, assignedUserIds });
     onClose();
@@ -70,15 +85,13 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, onCl
             className="w-full p-2 border rounded-md"
             placeholder="Mô tả chi tiết..."
           />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* --- CỘT 1: TRẠNG THÁI --- */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Trạng thái</label>
               <select name="statusId" value={editedTask.statusId || ''} onChange={handleChange} className="w-full p-2 border rounded-md">
                 {statuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
-            {/* --- CỘT 2: ĐỘ ƯU TIÊN --- */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Độ ưu tiên</label>
               <select name="priority" value={editedTask.priority || 'Medium'} onChange={handleChange} className="w-full p-2 border rounded-md">
@@ -87,7 +100,21 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, onCl
                 <option value="High">Cao</option>
               </select>
             </div>
-            {/* ===== MỤC MỚI ĐƯỢC THÊM VÀO ===== */}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
+                Ngày bắt đầu
+              </label>
+              <input
+                type="date"
+                id="startDate"
+                name="startDate"
+                value={editedTask.startDate || ''}
+                onChange={handleChange}
+                className="w-full p-2 border rounded-md"
+              />
+            </div>
             <div>
               <label htmlFor="deadline" className="block text-sm font-medium text-gray-700">
                 Deadline
@@ -101,7 +128,6 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, onCl
                 className="w-full p-2 border rounded-md"
               />
             </div>
-            {/* ==================================== */}
           </div>
           <UserSearchInput
             projectId={task.projectId}

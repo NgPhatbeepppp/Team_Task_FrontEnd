@@ -10,7 +10,12 @@ import NotificationsPage from './pages/NotificationsPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectWorkspacePage from './pages/ProjectWorkspacePage'; 
 import ProjectSettingsPage from './pages/ProjectSettingsPage';
-
+import MyTasksPage from './pages/MyTasksPage';
+import HomePage from './pages/HomePage'; 
+import MyCalendarPage from './pages/MyCalendarPage'; 
+import AdvancedSettingsPage from './pages/AdvancedSettingsPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import { ToastProvider } from './contexts/ToastContext';
 
 // Component trung gian để xử lý logic Route được bảo vệ
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -31,68 +36,34 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Các route công khai */}
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/teams" /> : <LoginPage />} />
-      <Route path="/register" element={isAuthenticated ? <Navigate to="/teams" /> : <RegisterPage />} />
-
-      {/* Route được bảo vệ cho trang Teams */}
-      <Route 
-        path="/teams" 
-        element={
-          <ProtectedRoute>
-            <TeamPage />
-          </ProtectedRoute>
-        } 
-      />
-      {/* Route được bảo vệ cho trang Lời mời & Thông báo */}
-      <Route 
-        path="/notifications" 
-        element={
-          <ProtectedRoute>
-            <NotificationsPage />
-          </ProtectedRoute>
-        } 
-      />
-      {/* Route được bảo vệ cho trang Profile */}
-      <Route 
-        path="/profile" 
-        element={
-          <ProtectedRoute>
-            <UserProfilePage />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/projects" 
-        element={
-          <ProtectedRoute>
-            <ProjectsPage />
-          </ProtectedRoute>
-        } 
-      />
-       {/* CHO TRANG CHI TIẾT DỰ ÁN */}
-      <Route 
-        path="/project/:projectId" 
-        element={
-          <ProtectedRoute>
-            {/* Trang chi tiết dự án */}
-            <ProjectWorkspacePage /> 
-          </ProtectedRoute>
-        } 
-      />
-       {/* ROUTE CHO TRANG CÀI ĐẶT */}
-      <Route 
-        path="/project/:projectId/settings" 
-        element={
-          <ProtectedRoute>
-            <ProjectSettingsPage />
-          </ProtectedRoute>
-        } 
-      />
-
-      {/* Route mặc định: Điều hướng đến /teams nếu đã đăng nhập, ngược lại về /login */}
+      {/* ✅ THAY ĐỔI: Chuyển hướng về trang chủ "/" nếu đã đăng nhập */}
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} />
+      <Route path="/register" element={isAuthenticated ? <Navigate to="/" /> : <RegisterPage />} />
+      
+      {/* Route được bảo vệ cho trang chủ */}
       <Route 
         path="/"
-        element={<Navigate to={isAuthenticated ? "/teams" : "/login"} />}
+        element={
+          <ProtectedRoute>
+            <HomePage />
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Các route được bảo vệ khác */}
+      <Route path="/tasks" element={<ProtectedRoute><MyTasksPage /></ProtectedRoute>} />
+      <Route path="/teams" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
+      <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+      <Route path="/project/:projectId" element={<ProtectedRoute><ProjectWorkspacePage /></ProtectedRoute>} />
+      <Route path="/project/:projectId/settings" element={<ProtectedRoute><ProjectSettingsPage /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><AdvancedSettingsPage /></ProtectedRoute>} />
+      <Route path="/calendar" element={<ProtectedRoute><MyCalendarPage /></ProtectedRoute>} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route 
+        path="*" 
+        element={<Navigate to={isAuthenticated ? "/" : "/login"} />} 
       />
     </Routes>
   );
@@ -103,7 +74,9 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <ToastProvider>
+          <AppRoutes />
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   );
