@@ -1,3 +1,4 @@
+// src/pages/NotificationsPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   getPendingInvitations,
@@ -33,10 +34,10 @@ const InvitationCard: React.FC<InvitationCardProps> = ({ invitation, onAction })
       }
       onAction(); // Gọi lại hàm để tải lại danh sách
     } catch (error) {
+      // Đảm bảo hiển thị lỗi nếu có sự cố
       addToast({ message: `Đã có lỗi xảy ra: ${error}`, type: 'error' });
       setIsLoading(false);
     }
-    // Component sẽ tự unmount sau khi onAction() chạy, không cần setLoading(false)
   };
 
   return (

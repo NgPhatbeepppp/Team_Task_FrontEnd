@@ -1,5 +1,4 @@
 // src/pages/ProjectWorkspacePage.tsx
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
@@ -15,7 +14,7 @@ import { ViewSwitcher } from '../components/ViewSwitcher';
 import { TaskListView } from '../components/TaskListView';
 import { KanbanBoardView } from '../components/KanbanBoardView';
 import { TaskDetailsModal } from '../components/TaskDetailsModal';
-import { CalendarView } from '../components/CalendarView'; // Thêm import
+import { CalendarView } from '../components/CalendarView';
 import { useToast } from '../hooks/useToast';
 
 const ProjectWorkspacePage = () => {
@@ -61,15 +60,15 @@ const ProjectWorkspacePage = () => {
     fetchProjectData();
   }, [fetchProjectData]);
 
-    const fetchOnlyStatuses = useCallback(async () => {
-        if (!projectId) return;
-        try {
-            const fetchedStatuses = await getProjectStatuses(Number(projectId));
-            setStatuses(fetchedStatuses);
-        } catch (error) {
-            console.error("Lỗi khi tải lại statuses:", error);
-        }
-    }, [projectId]);
+  const fetchOnlyStatuses = useCallback(async () => {
+    if (!projectId) return;
+    try {
+        const fetchedStatuses = await getProjectStatuses(Number(projectId));
+        setStatuses(fetchedStatuses);
+    } catch (error) {
+        console.error("Lỗi khi tải lại statuses:", error);
+    }
+  }, [projectId]);
 
   const handleCreateTask = async (taskData: Partial<Omit<TaskItem, 'taskAssignees'>> & { assignedUserIds?: number[] }) => {
     try {
@@ -125,15 +124,16 @@ const ProjectWorkspacePage = () => {
                   onStatusesChange={fetchOnlyStatuses}
                />;
       case 'calendar':
-        return <CalendarView tasks={tasks} onSelectTask={handleOpenTaskDetails} />; // Thay thế placeholder
+        return <CalendarView tasks={tasks} onSelectTask={handleOpenTaskDetails} />;
       default:
         return <TaskListView tasks={tasks} statuses={statuses} onTaskUpdate={fetchProjectData}  onTaskSelect={handleOpenTaskDetails} />;
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 flex">
       <Sidebar activeItem="Quản lý dự án" />
+
       <main className="flex-grow p-6 sm:p-8 flex flex-col md:ml-64">
         <div className="max-w-full mx-auto w-full flex flex-col flex-grow">
           <ProjectHeader
@@ -144,7 +144,7 @@ const ProjectWorkspacePage = () => {
             activeView={activeView}
             onViewChange={setActiveView}
           />
-          <div className="flex-grow">
+          <div className="flex-grow mt-4">
             {renderContent()}
           </div>
         </div>
