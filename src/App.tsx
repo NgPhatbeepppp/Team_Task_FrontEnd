@@ -1,3 +1,4 @@
+// src/App.tsx
 import React, { JSX } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -36,9 +37,8 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Các route công khai */}
-      {/* ✅ THAY ĐỔI: Chuyển hướng về trang chủ "/" nếu đã đăng nhập */}
       <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} />
-      <Route path="/register" element={isAuthenticated ? <Navigate to="/" /> : <RegisterPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       
       {/* Route được bảo vệ cho trang chủ */}
       <Route 
